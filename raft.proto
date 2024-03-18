@@ -1,0 +1,56 @@
+//define syntax
+syntax = "proto3"
+
+//define package
+package raft;
+
+//define services
+service Services{
+
+    //client -> requests certain data from the server
+    //server -> replies w/ data, leader id, bool variable depicting success or failure
+    
+    rpc ServeClient (ServeClientArgs) returns (ServeClientReply);
+
+    //invoked by leader to replicate log entries and to send heartbeats
+    rpc AppendEntries (AppendEntriesArgs) returns (AppendEntriesReply);
+
+    //invoked by node when in candidate set to request for votes
+    rpc RequestVote 
+    
+}
+
+message ServeClientArgs{
+    string Request = 1;
+}
+
+message ServeClientReply{
+    string Data = 1;
+    string LeaderID = 2;
+    bool Success = 3;
+}
+
+message AppendEntriesArgs{
+    string Term = 1;
+    string LeaderID = 2;
+    string PrevLogIndex = 3;
+    string PrevLogTerm = 4;
+    repeated string Entries = 5;
+}
+
+message AppendEntriesReply{
+    string Term = 1;
+    bool Success = 2;
+}
+
+message RequestVoteArgs{
+    string Term = 1;
+    string CandidateID = 2;
+    string LastLogIndex = 3;
+    string LastLogTerm = 4;
+}
+
+message RequestVoteResponse{
+    string Term = 1;
+    bool VoteGranted = 2;
+}
