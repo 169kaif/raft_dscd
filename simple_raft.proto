@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package simple_raft;
+
+// The Raft service definition.
+service Raft {
+  // Heartbeat RPC for nodes to interact with each other
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse) {}
+
+  // Command RPC for clients to interact with nodes
+  rpc SubmitCommand(CommandRequest) returns (CommandResponse) {}
+}
+
+// The request message containing information about the heartbeat.
+message HeartbeatRequest {
+  string nodeId = 1; // Identifier of the node sending the heartbeat
+}
+
+// The response message to a heartbeat.
+message HeartbeatResponse {
+  bool success = 1; // Indicates if the heartbeat was successfully received
+}
+
+// The request message containing a command from a client.
+message CommandRequest {
+  string command = 1; // The command to be processed
+}
+
+// The response message to a command.
+message CommandResponse {
+  bool success = 1; // Indicates if the command was successfully processed
+  string result = 2; // The result of processing the command
+}
