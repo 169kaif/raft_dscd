@@ -30,6 +30,11 @@ class ServicesStub(object):
                 request_serializer=raft__pb2.RequestVoteArgs.SerializeToString,
                 response_deserializer=raft__pb2.RequestVoteResponse.FromString,
                 )
+        self.ReplicateLogRequest = channel.unary_unary(
+                '/raft.Services/ReplicateLogRequest',
+                request_serializer=raft__pb2.ReplicateLogArgs.SerializeToString,
+                response_deserializer=raft__pb2.ReplicateLogResponse.FromString,
+                )
 
 
 class ServicesServicer(object):
@@ -59,6 +64,13 @@ class ServicesServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ReplicateLogRequest(self, request, context):
+        """invoked by leader node to replicate log
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ServicesServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -76,6 +88,11 @@ def add_ServicesServicer_to_server(servicer, server):
                     servicer.RequestVote,
                     request_deserializer=raft__pb2.RequestVoteArgs.FromString,
                     response_serializer=raft__pb2.RequestVoteResponse.SerializeToString,
+            ),
+            'ReplicateLogRequest': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReplicateLogRequest,
+                    request_deserializer=raft__pb2.ReplicateLogArgs.FromString,
+                    response_serializer=raft__pb2.ReplicateLogResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -136,5 +153,22 @@ class Services(object):
         return grpc.experimental.unary_unary(request, target, '/raft.Services/RequestVote',
             raft__pb2.RequestVoteArgs.SerializeToString,
             raft__pb2.RequestVoteResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ReplicateLogRequest(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/raft.Services/ReplicateLogRequest',
+            raft__pb2.ReplicateLogArgs.SerializeToString,
+            raft__pb2.ReplicateLogResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

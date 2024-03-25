@@ -125,17 +125,40 @@ class Node(raft_pb2_grpc.ServicesServicer):
                                                           2*self.election_period_ms)/1000.0
     #method to request votes from all peers
     def request_vote(self):
+        reply=""
         for address in self.peer_addresses:
             with grpc.insecure_channel(address) as channel:
                 stub = raft_pb2.ServicesStub(channel)
-
                 try:
                     req_msg = raft_pb2.RequestVoteArgs(Term = str(self.current_term), CandidateID = str(self.node_id), LastLogIndex = str(len(self.log)-1), LastLogTerm = self.log[-1])
                     response = stub.RequestVote(req_msg)
-                    print(f"Vote Request successfully sent to {address}")
+                    response_term = response.Term
+                    response_vote = response.VoteGranted
+                    if (self.current_role=="candidate" and response_term==self.current_term and response_vote==True):
+                        self.votes_received.add(address)
+                        if (len(self.votes_received) > (len(self.peer_addresses)+2)/2):
+                            self.current_role = "leader"
+                            self.current_leader = self.node_id
+                            self.voted_for = None
+                            reply="Success"
+                            return reply
+                    elif(response_term>self.current_term):
+                        self.current_term = response_term
+                        self.current_role = "follower"
+                        self.voted_for = None
+                        reply="Failed"
+                        return reply
                 except grpc.RpcError as e:
                     print(f"Failed to send Vote Request to {address}")
-    def REPLICATELOG()
+
+    def replicateLog(self,follower_id):
+        prefixlen=self.sent_length[follower_id]
+        suffix=[self.log[i] for i in range(prefixlen,len(self.log))]
+        prefixterm=0
+        if prefixlen>0:
+            prefixterm=self.log[prefixlen-1][-1]
+        return self.node_id,self.current_term,prefixlen,prefixterm,self.commit_length,suffix
+        
 
 #this is "server" side basically
 
@@ -151,7 +174,7 @@ def nodeClient(Node):
             start_time = time.monotonic()
 
             #check for rpc timeout
-            while (time.monotonic() - start_time)*1000 < Node.rpc_period_ms:
+            while (time.monotonic() - start_time) < Node.rpc_period_ms:
                 pass
 
             #transition to follower state when timeout
@@ -161,24 +184,9 @@ def nodeClient(Node):
 
             #start election timer
             election_start_time = time.monotonic()
-
-            #increment current term
-            Node.current_term += 1
-
-            #vote for self, need to, WRITE TO LOG AS WELL 
-            Node.votedFor = Node.node_id
-
-            #clear and add vote to votes_received
-            Node.votes_received.clear()
-            Node.votes_received.add(Node.node_id)
-
-            #check last term
-            Node.last_term = None
-            if (len(Node.log) > 0):
-                Node.last_term = Node.log[-1] 
-        
-            #request vote from all nodes inside a while loop
-            Node.request_vote()
+            
+            #set bool variable to enter for the first time
+            first_election = True
             
             while (True):
                 
@@ -188,11 +196,39 @@ def nodeClient(Node):
                     break
                 
                 #if election times out, send message again
-                if ((time.monotonic() - election_start_time)*1000 > Node.elections_period_ms):
-                    break
+                if (first_election or (time.monotonic() - election_start_time > Node.elections_period_ms)):
+
+                    if (first_election):
+                        first_election = False
+                    else:
+                        election_start_time = time.monotonic()
+
+                    #increment current term
+                    Node.current_term += 1
+
+                    #vote for self, need to, WRITE TO LOG AS WELL 
+                    Node.votedFor = Node.node_id
+
+                    #clear and add vote to votes_received
+                    Node.votes_received.clear()
+                    Node.votes_received.add(Node.node_id)
+
+                    #check last term
+                    Node.last_term = None
+                    if (len(Node.log) > 0):
+                        Node.last_term = Node.log[-1] 
+                
+                    #request vote from all nodes inside a while loop
+                    
+                    reply=Node.request_vote()
+                    if(reply=="Success" and (time.monotonic() - election_start_time)< Node.elections_period_ms):
+                        for address in peer_addresses:
+                            Node
+                        break
 
 if __name__=="main":
-    #parse through terminal arguments
+
+    #node id is just your current address
     node_id = sys.argv[1]
     port = sys.argv[2]
     peer_addresses = sys.argv[3:]
