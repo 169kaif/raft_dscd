@@ -20,6 +20,9 @@ service Services{
     
     //invoked by leader node to replicate log
     rpc ReplicateLogRequest (ReplicateLogArgs) returns (ReplicateLogResponse);
+
+    //forward client request to leader node
+    rpc ForwardRequest (ForwardRequestArgs) returns (ForwardRequestResponse);
 }
 
 message ServeClientArgs{

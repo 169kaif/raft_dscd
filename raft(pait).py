@@ -11,21 +11,34 @@ import raft_pb2_grpc
 
 
 class Node(raft_pb2_grpc.ServicesServicer):
+    
     def __init__(self, node_id, peer_addresses):
         self.node_id = node_id
         self.current_term = 0
         self.voted_for = None
-        #log will have list of touples with (command, term)
+        
+        #log will have list of tuples with (command, term)
         self.log = []
         self.commit_length = 0
         self.current_role = "follower"
         self.current_leader = None
         self.votes_received = set()
-        self.sent_length = []
-        self.acked_length = []
-        self.database={}
+
         self.peer_addresses = peer_addresses
 
+        #init sent length
+        self.sent_length = {}
+        for node in peer_addresses.keys():
+            self.sent_length[node] = 0
+
+        #init acked length 
+        self.acked_length = {}
+        for node in peer_addresses.keys():
+            self.acked_length[node] = 0
+
+        #init database to store key value pairs
+        self.database={}
+        
         self.election_period_ms = randint(1000, 5000)
         self.rpc_period_ms = 3000
         self.last_heard = time.monotonic()
@@ -72,8 +85,45 @@ class Node(raft_pb2_grpc.ServicesServicer):
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
 
+        message = request.Request
+        req_action = message[:3]
+
+        serveclient_reply = raft_pb2.ServeClientReply()
+
+        #check requested action
+        if (req_action == "SET"):
+
+            if (self.current_role == "leader"):
+                self.log.append((message, self.current_term))
+                self.acked_length[node_id] = len(self.log)
+
+                #replicate log to followers
+                for follower in self.peer_addresses.keys():
+                    self.replicateLog(follower)
+
+                serveclient_reply.Data = ""
+                serveclient_reply.LeaderID = self.current_leader
+                serveclient_reply.Success = True
+
+                return serveclient_reply
+            else:
+                serveclient_reply.Data = ""
+                serveclient_reply.LeaderID = self.current_leader
+                serveclient_reply.Success = False
+
+                return serveclient_reply
+            
+        else:
+            # if requested action is GET (LEADER LEASE IMPLEMENTATION NEEDED)
+                
+
+                
+    def ReplicateLogRequest(self, request, context):
+        
+        
+        
+        
     def AppendEntries(self, request, context):
         """invoked by leader to replicate log entries and to send heartbeats
         """
@@ -84,8 +134,6 @@ class Node(raft_pb2_grpc.ServicesServicer):
     def RequestVote(self, request, context):
         """invoked by node when in candidate set to request for votes
         """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
 
         server_response=raft_pb2.RequestVoteResponse()
 
@@ -126,7 +174,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
     #method to request votes from all peers
     def request_vote(self):
         reply=""
-        for address in self.peer_addresses:
+        for id,address in self.peer_addresses:
             with grpc.insecure_channel(address) as channel:
                 stub = raft_pb2.ServicesStub(channel)
                 try:
@@ -135,7 +183,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                     response_term = response.Term
                     response_vote = response.VoteGranted
                     if (self.current_role=="candidate" and response_term==self.current_term and response_vote==True):
-                        self.votes_received.add(address)
+                        self.votes_received.add(id)
                         if (len(self.votes_received) > (len(self.peer_addresses)+2)/2):
                             self.current_role = "leader"
                             self.current_leader = self.node_id
@@ -152,13 +200,19 @@ class Node(raft_pb2_grpc.ServicesServicer):
                     print(f"Failed to send Vote Request to {address}")
 
     def replicateLog(self,follower_id):
-        prefixlen=self.sent_length[follower_id]
+        prefixlen=self.sent_length[int(follower_id)-1]
         suffix=[self.log[i] for i in range(prefixlen,len(self.log))]
+        sending_suffix=[i[0]+'|'+str(i[1]) for i in suffix]
         prefixterm=0
         if prefixlen>0:
             prefixterm=self.log[prefixlen-1][-1]
-        return self.node_id,self.current_term,prefixlen,prefixterm,self.commit_length,suffix
-        
+        with grpc.insecure_channel(self.peer_addresses[follower_id]) as channel:
+                stub = raft_pb2.ServicesStub(channel)
+                try:
+                    req_msg = raft_pb2.ReplicateLogArgs(Term = str(self.current_term), LeaderID = str(self.current_leader), PrefixLength = str(prefixlen), PrefixTerm = str(prefixterm), CommitLength = str(self.commit_length), Suffix = sending_suffix)
+                    response = stub.ReplicateLogRequest(req_msg)
+                except grpc.RpcError as e:
+                    print(f"Failed to send Vote Request to {follower_id}")
 
 #this is "server" side basically
 
@@ -168,7 +222,15 @@ def nodeClient(Node):
 
         #check current role
         if Node.current_role == "leader":
-            pass
+
+            #replicate log periodically
+            current_time = time.monotonic()
+
+            while(True):
+                if ((time.monotonic() - current_time) > 100):
+                    for i in Node.peer_addresses.keys():
+                        Node.replicatelog(i)
+                    current_time = time.monotonic()
 
         elif Node.current_role == "follower":
             start_time = time.monotonic()
@@ -222,13 +284,15 @@ def nodeClient(Node):
                     
                     reply=Node.request_vote()
                     if(reply=="Success" and (time.monotonic() - election_start_time)< Node.elections_period_ms):
-                        for address in peer_addresses:
-                            Node
+                        for id in peer_addresses.keys():
+                            Node.sent_length[id]=len(Node.log)
+                            Node.acked_length[id]=0
+                            Node.replicateLog(id)
                         break
 
-if __name__=="main":
 
-    #node id is just your current address
+if __name__=="main":
+    #node id
     node_id = sys.argv[1]
     port = sys.argv[2]
     peer_addresses = sys.argv[3:]
