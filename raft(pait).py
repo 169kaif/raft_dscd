@@ -10,8 +10,8 @@ import raft_pb2
 import raft_pb2_grpc
 
 
-class Node:
-    def __init__(self, node_id, port, peer_addresses):
+class Node(raft_pb2_grpc.ServicesServicer):
+    def __init__(self, node_id, peer_addresses):
         self.node_id = node_id
         self.current_term = 0
         self.voted_for = None
@@ -53,29 +53,51 @@ class Node:
         # else:
             ##do restoration
 
-        #start server
+    
+
+    def startServer(self, port):
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
-        raft_pb2_grpc.add_ServicesServicer_to_server(server)
+        raft_pb2_grpc.add_ServicesServicer_to_server(self,server)
         server.add_insecure_port(f'[::]:{port}')
         server.start()
         print(f"Node {self.node_id} listening on port {port}")
         server.wait_for_termination()
 
+    def ServeClient(self, request, context):
+        """client -> requests certain data from the server
+        server -> replies w/ data, leader id, bool variable depicting success or failure
+
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AppendEntries(self, request, context):
+        """invoked by leader to replicate log entries and to send heartbeats
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def RequestVote(self, request, context):
+        """invoked by node when in candidate set to request for votes
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+    
+    def set_election_timeout(self, timeout=None):
+        # Reset this whenever previous timeout expires and starts a new election
+        if timeout:
+            self.election_timeout = timeout
+        else:
+            self.election_timeout = time.time() + randint(self.election_period_ms,
+                                                          2*self.election_period_ms)/1000.0
     #method to request votes from all peers
-    def request_vote(self):
-        for address in self.peer_addresses:
-            with grpc.insecure_channel(address) as channel:
-                stub = raft_pb2.ServicesStub(channel)
+    
+#this is "server" side basically
 
-                try:
-                    req_msg = raft_pb2.RequestVoteArgs(Term = str(self.current_term), CandidateID = str(self.node_id), LastLogIndex = str(len(self.log)-1), LastLogTerm = self.log[-1])
-                    response = stub.RequestVote(req_msg)
-                    print(f"Vote Request successfully sent to {address}")
-                except grpc.RpcError as e:
-                    print(f"Failed to send Vote Request to {address}")
-
-
-def nodeServe(Node):
+def nodeCLient(Node):
     while True:
 
         #check current role
@@ -120,13 +142,16 @@ def nodeServe(Node):
                     threading.Thread(target=Node.request_vote, daemon=True).start()
 
 
-                    # NEED TO WORK ON IF CONSENSUS RECEIVED, MOVE TO LEADER STATE
-                    # NEED TO MODIFY METHOD IN NODE CLASS TO JUDGE CONSENSUS
-                    # IF HIGHER TERM RECEIVED, STEP DOWN TO FOLLOWER STATE
+                    #NEED TO WORK ON IF CONSENSUS RECEIVED, MOVE TO LEADER STATE
+                    #NEED TO MODIFY METHOD IN NODE CLASS TO JUDGE CONSENSUS
+                    #IF HIGHER TERM RECEIVED, STEP DOWN TO FOLLOWER STATE
 
 
 if __name__=="main":
     #parse through terminal arguments
     node_id = sys.argv[1]
-    node = Node(node_id)
-    nodeServe(node)
+    port = sys.argv[2]
+    peer_addresses = sys.argv[3:]
+    node_RAFT = Node(node_id)
+    #on 2 different threads to handle client and server
+    
