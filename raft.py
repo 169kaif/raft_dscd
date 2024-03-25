@@ -119,9 +119,9 @@ def nodeServe(Node):
                     threading.Thread(target=Node.request_vote, daemon=True).start()
 
 
-                    #NEED TO WORK ON IF CONSENSUS RECEIVED, MOVE TO LEADER STATE
-                    #NEED TO MODIFY METHOD IN NODE CLASS TO JUDGE CONSENSUS
-                    #IF HIGHER TERM RECEIVED, STEP DOWN TO FOLLOWER STATE
+                    # NEED TO WORK ON IF CONSENSUS RECEIVED, MOVE TO LEADER STATE
+                    # NEED TO MODIFY METHOD IN NODE CLASS TO JUDGE CONSENSUS
+                    # IF HIGHER TERM RECEIVED, STEP DOWN TO FOLLOWER STATE
 
 
 if __name__=="main":
