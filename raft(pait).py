@@ -15,6 +15,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         self.node_id = node_id
         self.current_term = 0
         self.voted_for = None
+        #log will have list of touples with (command, term)
         self.log = []
         self.commit_length = 0
         self.current_role = "follower"
@@ -27,6 +28,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
         self.election_period_ms = randint(1000, 5000)
         self.rpc_period_ms = 3000
+        self.last_heard = time.monotonic()
         self.election_timeout=-1
 
         node_log_location = f"node_id_{node_id}"
@@ -84,7 +86,35 @@ class Node(raft_pb2_grpc.ServicesServicer):
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+
+        server_response=raft_pb2.RequestVoteResponse()
+
+        candidateTerm = request.Term
+        candidateID = request.CandidateID
+        candidateLogLength = request.LastLogIndex
+        candidateLastLogTerm = request.LastLogTerm
+        
+        # if node is in candidate state, upon receiving voteReq from
+        # higher term, it transitions beack to the follower state
+        if self.current_term < candidateTerm:
+            self.current_term = candidateTerm
+            self.current_role = "follower"
+            self.voted_for = None
+
+        lastTerm=0
+        if (len(self.log) > 0):
+            lastTerm = self.log[-1][-1]
+        
+        logok=(candidateLastLogTerm>lastTerm) or (candidateLastLogTerm==lastTerm and candidateLogLength>=len(self.log))
+        if(candidateTerm==self.current_term and logok and (self.voted_for is None or self.voted_for==candidateID)):
+            server_response.Term = self.current_term
+            server_response.VoteGranted = True
+            self.voted_for = candidateID
+        
+        else:
+            server_response.Term=self.current_term
+            server_response.VoteGranted=False   
+        return server_response
     
     def set_election_timeout(self, timeout=None):
         # Reset this whenever previous timeout expires and starts a new election
@@ -94,10 +124,23 @@ class Node(raft_pb2_grpc.ServicesServicer):
             self.election_timeout = time.time() + randint(self.election_period_ms,
                                                           2*self.election_period_ms)/1000.0
     #method to request votes from all peers
-    
+    def request_vote(self):
+        for address in self.peer_addresses:
+            with grpc.insecure_channel(address) as channel:
+                stub = raft_pb2.ServicesStub(channel)
+
+                try:
+                    req_msg = raft_pb2.RequestVoteArgs(Term = str(self.current_term), CandidateID = str(self.node_id), LastLogIndex = str(len(self.log)-1), LastLogTerm = self.log[-1])
+                    response = stub.RequestVote(req_msg)
+                    print(f"Vote Request successfully sent to {address}")
+                except grpc.RpcError as e:
+                    print(f"Failed to send Vote Request to {address}")
+    def REPLICATELOG()
+
 #this is "server" side basically
 
-def nodeCLient(Node):
+def nodeClient(Node):
+    
     while True:
 
         #check current role
@@ -132,20 +175,21 @@ def nodeCLient(Node):
             #check last term
             Node.last_term = None
             if (len(Node.log) > 0):
-                Node.last_term = Node.log[-1]
-
+                Node.last_term = Node.log[-1] 
+        
             #request vote from all nodes inside a while loop
+            Node.request_vote()
+            
             while (True):
-
+                
+                #if higher term recieved, step down to follower state 
+                #OR if election successful, transition to leader state
+                if (Node.current_role != "follower"):
+                    break
+                
                 #if election times out, send message again
                 if ((time.monotonic() - election_start_time)*1000 > Node.elections_period_ms):
-                    threading.Thread(target=Node.request_vote, daemon=True).start()
-
-
-                    #NEED TO WORK ON IF CONSENSUS RECEIVED, MOVE TO LEADER STATE
-                    #NEED TO MODIFY METHOD IN NODE CLASS TO JUDGE CONSENSUS
-                    #IF HIGHER TERM RECEIVED, STEP DOWN TO FOLLOWER STATE
-
+                    break
 
 if __name__=="main":
     #parse through terminal arguments
