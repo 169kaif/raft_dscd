@@ -48,6 +48,7 @@ message ReplicateLogArgs{
     int32 PrefixTerm = 4;
     int32 CommitLength = 5;
     repeated string Suffix = 6;
+    float leaseReminder = 7;
 }
 
 message ReplicateLogResponse{
