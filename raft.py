@@ -9,7 +9,7 @@ import grpc
 import raft_pb2
 import raft_pb2_grpc
 
-LEASE_TIME = 2500
+LEASE_TIME = 2.5
 
 class Node(raft_pb2_grpc.ServicesServicer):
     
@@ -41,8 +41,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
         #init database to store key value pairs
         self.database={}
         
-        self.election_period_ms = randint(1000, 5000)
-        self.rpc_period_ms = 3000
+        self.election_period_ms = randint(1, 5)
+        self.rpc_period_ms = 3
         self.last_heard = time.monotonic()
         self.election_timeout=-1
         self.count_for_success_heartbeat=0
@@ -451,7 +451,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
 
 def nodeClient(Node):
-    print("hi")
+
     while True:
         #check current role
         if Node.current_role == "leader":
@@ -500,7 +500,7 @@ def nodeClient(Node):
 
         elif Node.current_role == "follower":
             Node.rpc_timeout_time = time.monotonic()
-
+            print(f"Node {Node.node_id} is in follower state.")
             #check for rpc timeout
             while (time.monotonic() - Node.rpc_timeout_time) < Node.rpc_period_ms:
                 pass
@@ -526,7 +526,7 @@ def nodeClient(Node):
                 #OR if election successful, transition to leader state
                 #OR if some other node replies with a higher term
                         
-                if ((Node.current_role != "candidate") or (Node.votedFor != Node.node_id)):
+                if ((Node.current_role != "candidate") or (Node.voted_for != Node.node_id)):
                     break
                 
                 #if election times out, send message again
@@ -541,7 +541,7 @@ def nodeClient(Node):
                     Node.current_term += 1
 
                     #vote for self, need to, WRITE TO LOG AS WELL 
-                    Node.votedFor = Node.node_id
+                    Node.voted_for = Node.node_id
 
                     #clear and add vote to votes_received
                     Node.votes_received.clear()

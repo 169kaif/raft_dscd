@@ -1,0 +1,2 @@
+Node 1 election timer timed out, Starting election
+Node 1 election timer timed out, Starting election
