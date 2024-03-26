@@ -26,6 +26,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         self.votes_received = set()
         self.PrevLease=None
         self.peer_addresses = peer_addresses
+        self.Haslease=False
 
         #init sent length
         self.sent_length = {}
@@ -131,17 +132,42 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 serveclient_reply.LeaderID = self.current_leader
                 serveclient_reply.Success = True
 
+                print("Successfully SET the requested value...")
+
                 return serveclient_reply
             else:
                 serveclient_reply.Data = ""
                 serveclient_reply.LeaderID = self.current_leader
                 serveclient_reply.Success = False
 
+                print("Unsuccessful SET of the requested value...")
                 return serveclient_reply
             
         else:
-            pass
-            # if requested action is GET (LEADER LEASE IMPLEMENTATION NEEDED)
+            if (self.current_role == "leader"):
+                if (self.Haslease):
+                    print("Successfully replied to GET request...")
+                    req_key = message.split()[1]
+                    serveclient_reply.Data = self.database[req_key]
+                    serveclient_reply.LeaderID = self.current_leader
+                    serveclient_reply.Success = True
+
+                    return serveclient_reply
+                else:
+                    print(f"Leader {self.node_id} does not have lease yet...")
+                    serveclient_reply.Data = ""
+                    serveclient_reply.LeaderID = self.current_leader
+                    serveclient_reply.Success = False
+
+                    return serveclient_reply
+            else:
+
+                print("Not the leader, replied w/ leader id...")
+                serveclient_reply.Data = ""
+                serveclient_reply.LeaderID = self.current_leader
+                serveclient_reply.Success = False
+
+                return serveclient_reply
         
     def AppendEntries(self,prefixLen,LeaderCommit,suffix):
 
@@ -436,8 +462,8 @@ def nodeClient(Node):
             else:
                 print(f"New Leader waiting for Old Leader Lease to timeout.")
                 while((time.monotonic-current_time)-Node.PrevLease>0):
-                    pass
-
+                    break
+            Node.Haslease=True
             while(True):
     
                 if(time.monotonic-current_time>Node.Lease_time):
@@ -445,6 +471,7 @@ def nodeClient(Node):
                     print(f"Leader {Node.node_id} lease Renewal failed...stepping down")
                     with open("dump.txt", "a") as f:
                         f.write(f"Leader {Node.node_id} lease Renewal failed...stepping down")
+                        Node.Haslease=False
 
                     Node.current_role = "follower"
 
