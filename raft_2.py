@@ -27,6 +27,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         self.PrevLease=None
         self.peer_addresses = peer_addresses
         self.Haslease=False
+        self.remaining_time=0
 
         #init sent length
         self.sent_length = {}
@@ -326,11 +327,15 @@ class Node(raft_pb2_grpc.ServicesServicer):
     #method to request votes from all peers
     def request_vote(self):
         reply=""
-        for id,address in self.peer_addresses:
+        for id,address in self.peer_addresses.items():
             with grpc.insecure_channel(address) as channel:
-                stub = raft_pb2.ServicesStub(channel)
+                stub = raft_pb2_grpc.ServicesStub(channel)
                 try:
-                    req_msg = raft_pb2.RequestVoteArgs(Term = str(self.current_term), CandidateID = str(self.node_id), LastLogIndex = str(len(self.log)-1), LastLogTerm = self.log[-1])
+                    if(len(self.log)==0):
+                        req_msg = raft_pb2.RequestVoteArgs(Term = self.current_term, CandidateID = self.node_id, LastLogIndex = len(self.log), LastLogTerm =0)
+                    else:
+                        req_msg = raft_pb2.RequestVoteArgs(Term = self.current_term, CandidateID = self.node_id, LastLogIndex = len(self.log), LastLogTerm = self.log[-1][-1])
+                    
                     response = stub.RequestVote(req_msg)
                     response_term = response.Term
                     response_vote = response.VoteGranted
@@ -399,7 +404,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
             else:
                 break                
 
-    def replicateLog(self,follower_id,duration):
+    def replicateLog(self,follower_id):
         prefixlen=self.sent_length[int(follower_id)-1]
         suffix=[self.log[i] for i in range(prefixlen,len(self.log))]
         sending_suffix=[i[0]+'|'+str(i[1]) for i in suffix]
@@ -407,9 +412,9 @@ class Node(raft_pb2_grpc.ServicesServicer):
         if prefixlen>0:
             prefixterm=self.log[prefixlen-1][-1]
         with grpc.insecure_channel(self.peer_addresses[follower_id]) as channel:
-                stub = raft_pb2.ServicesStub(channel)
+                stub = raft_pb2_grpc.ServicesStub(channel)
                 try:
-                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseReminder=duration)
+                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseReminder=self.remaining_time)
                     response = stub.ReplicateLogRequest(req_msg)
 
                     # message ReplicateLogResponse{
@@ -434,7 +439,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
                         elif (self.sent_length[follower_id] > 0):
                             #log mismatch, so decrease sent length by 1
                             self.sent_length[follower_id] = self.sent_length[follower_id] - 1
-                            self.replicateLog(self, follower_id,duration)
+
+                            self.replicateLog(self, follower_id)
 
                     elif (response_current_term > self.current_term):
                         self.current_term = response_current_term
@@ -451,7 +457,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
 
 def nodeClient(Node):
-    
+
     while True:
         #check current role
         if Node.current_role == "leader":
@@ -491,7 +497,8 @@ def nodeClient(Node):
                     
                     for i in Node.peer_addresses.keys():
                         remaining=time.monotonic-current_time-Node.Lease_Time
-                        Node.replicatelog(i,remaining)
+                        Node.remaining_time=remaining
+                        Node.replicatelog(i)
                     if(Node.count_for_success_heartbeat>=len(Node.peer_addresses//2 +1)):
                         Node.count_for_success_heartbeat=0
                         Node.Lease_Time=LEASE_TIME
@@ -500,7 +507,7 @@ def nodeClient(Node):
 
         elif Node.current_role == "follower":
             Node.rpc_timeout_time = time.monotonic()
-
+            print(f"Node {Node.node_id} is in follower state.")
             #check for rpc timeout
             while (time.monotonic() - Node.rpc_timeout_time) < Node.rpc_period_ms:
                 pass
@@ -513,24 +520,31 @@ def nodeClient(Node):
             Node.current_role = "candidate"
 
         elif Node.current_role == "candidate":
+            print(f"Node {Node.node_id} is in candidate state.")
 
             #start election timer
             election_start_time = time.monotonic()
+
+            #set voted for to itself
+            Node.voted_for = Node.node_id
             
             #set bool variable to enter for the first time
             first_election = True
             
             while (True):
+
+                print("inside election loop")
                 
                 #if higher term recieved, step down to follower state 
                 #OR if election successful, transition to leader state
                 #OR if some other node replies with a higher term
                         
                 if ((Node.current_role != "candidate") or (Node.voted_for != Node.node_id)):
+                    print("inside first break")
                     break
                 
                 #if election times out, send message again
-                if (first_election or (time.monotonic() - election_start_time > Node.elections_period_ms)):
+                if (first_election or (time.monotonic() - election_start_time > Node.election_period_ms)):
 
                     if (first_election):
                         first_election = False
@@ -548,14 +562,14 @@ def nodeClient(Node):
                     Node.votes_received.add(Node.node_id)
 
                     #check last term
-                    Node.last_term = None
+                    Node.last_term = 0
                     if (len(Node.log) > 0):
-                        Node.last_term = Node.log[-1] 
+                        Node.last_term = Node.log[-1][-1]
                 
                     #request vote from all nodes inside a while loop
                     
                     reply=Node.request_vote()
-                    if(reply=="Success" and (time.monotonic() - election_start_time)< Node.elections_period_ms):
+                    if(reply=="Success" and (time.monotonic() - election_start_time)< Node.election_period_ms):
                         for id in peer_addresses.keys():
                             Node.sent_length[id]=len(Node.log)
                             Node.acked_length[id]=0
@@ -570,7 +584,8 @@ if __name__ == '__main__':
     peer_addresses = {1:"localhost:5056", 3:"localhost:5058"}
     node = Node(node_id, peer_addresses)
 
-    #spawn 2 different threads to handle client and server
+    #spawn 2 different threads to handle client and serve
     client_thread = threading.Thread(target=nodeClient, args=(node,))
     client_thread.start()
     node.startServer(port)
+    

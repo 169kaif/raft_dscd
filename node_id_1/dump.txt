@@ -1,3 +1,0 @@
-Node 1 election timer timed out, Starting election
-Error occurred while sending RPC to Node 3.
-Node 1 became the leader for term 2

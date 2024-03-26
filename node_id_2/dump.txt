@@ -1,4 +1,0 @@
-Vote granted for Node 1 in term 1
-Node 2 election timer timed out, Starting election
-Vote granted for Node 1 in term 2
-Node 2 election timer timed out, Starting election

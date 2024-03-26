@@ -27,6 +27,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         self.PrevLease=None
         self.peer_addresses = peer_addresses
         self.Haslease=False
+        self.remaining_time=0
 
         #init sent length
         self.sent_length = {}
@@ -403,7 +404,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
             else:
                 break                
 
-    def replicateLog(self,follower_id,duration):
+    def replicateLog(self,follower_id):
         prefixlen=self.sent_length[int(follower_id)-1]
         suffix=[self.log[i] for i in range(prefixlen,len(self.log))]
         sending_suffix=[i[0]+'|'+str(i[1]) for i in suffix]
@@ -413,7 +414,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         with grpc.insecure_channel(self.peer_addresses[follower_id]) as channel:
                 stub = raft_pb2_grpc.ServicesStub(channel)
                 try:
-                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseReminder=duration)
+                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseReminder=self.remaining_time)
                     response = stub.ReplicateLogRequest(req_msg)
 
                     # message ReplicateLogResponse{
@@ -438,7 +439,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
                         elif (self.sent_length[follower_id] > 0):
                             #log mismatch, so decrease sent length by 1
                             self.sent_length[follower_id] = self.sent_length[follower_id] - 1
-                            self.replicateLog(self, follower_id,duration)
+
+                            self.replicateLog(self, follower_id)
 
                     elif (response_current_term > self.current_term):
                         self.current_term = response_current_term
@@ -495,7 +497,8 @@ def nodeClient(Node):
                     
                     for i in Node.peer_addresses.keys():
                         remaining=time.monotonic-current_time-Node.Lease_Time
-                        Node.replicatelog(i,remaining)
+                        Node.remaining_time=remaining
+                        Node.replicatelog(i)
                     if(Node.count_for_success_heartbeat>=len(Node.peer_addresses//2 +1)):
                         Node.count_for_success_heartbeat=0
                         Node.Lease_Time=LEASE_TIME
