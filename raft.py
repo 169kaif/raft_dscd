@@ -253,7 +253,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         candidateTerm = request.Term
         candidateID = request.CandidateID
         candidateLogLength = request.LastLogIndex
-        candidateLastLogTerm = request.LastLogTerm
+        candidateLastLogTerm = request.LastLogTerm  
         
         # if node is in candidate state, upon receiving voteReq from
         # higher term, it transitions beack to the follower state
