@@ -99,7 +99,6 @@ class Node(raft_pb2_grpc.ServicesServicer):
             f.write(f"NodeID: {node_id}")
 
     def startServer(self, port):
-        print("hi")
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
         raft_pb2_grpc.add_ServicesServicer_to_server(self,server)
         server.add_insecure_port(f'[::]:{port}')
@@ -567,7 +566,7 @@ def nodeClient(Node):
 if __name__=="main":
     node_id = sys.argv[1]
     port = sys.argv[2]
-    peer_addresses = {2:"localhost:5057", 3:"localhost:5058"}
+    peer_addresses = {1:"localhost:5056", 3:"localhost:5058"}
     node = Node(node_id, peer_addresses)
 
     #spawn 2 different threads to handle client and server

@@ -5,7 +5,7 @@ import raft_pb2_grpc
 if __name__ == '__main__':
 
     #hard code peer addresses
-    peer_addresses = {}
+    peer_addresses = {1:"localhost:5056", 2:"localhost:5057", 3:"localhost:5058"}
     
     #store current leader (initialized w/ 1)
     current_leader = 1
