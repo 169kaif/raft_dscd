@@ -12,17 +12,11 @@ service Services{
     
     rpc ServeClient (ServeClientArgs) returns (ServeClientReply);
 
-    //invoked by leader to replicate log entries and to send heartbeats
-    rpc AppendEntries (AppendEntriesArgs) returns (AppendEntriesReply);
-
     //invoked by node when in candidate set to request for votes
     rpc RequestVote (RequestVoteArgs) returns (RequestVoteResponse);
     
     //invoked by leader node to replicate log
     rpc ReplicateLogRequest (ReplicateLogArgs) returns (ReplicateLogResponse);
-
-    //forward client request to leader node
-    rpc ForwardRequest (ForwardRequestArgs) returns (ForwardRequestResponse);
 }
 
 message ServeClientArgs{
@@ -31,27 +25,13 @@ message ServeClientArgs{
 
 message ServeClientReply{
     string Data = 1;
-    string LeaderID = 2;
+    int32 LeaderID = 2;
     bool Success = 3;
-}
-
-message AppendEntriesArgs{
-    int32 Term = 1;
-    string LeaderID = 2;
-    int32 PrevLogIndex = 3;
-    int32 PrevLogTerm = 4;
-    repeated string Entries = 5;
-    string LeaderCommit=6;
-}
-
-message AppendEntriesReply{
-    int32 Term = 1;
-    bool Success = 2;
 }
 
 message RequestVoteArgs{
     int32 Term = 1;
-    string CandidateID = 2;
+    int32 CandidateID = 2;
     int32 LastLogIndex = 3;
     int32 LastLogTerm = 4;
 }
@@ -62,7 +42,7 @@ message RequestVoteResponse{
 }
 
 message ReplicateLogArgs{
-    string LeaderID = 1;
+    int32 LeaderID = 1;
     int32 Term = 2;
     int32 PrefixLen = 3;
     int32 PrefixTerm = 4;
@@ -71,7 +51,7 @@ message ReplicateLogArgs{
 }
 
 message ReplicateLogResponse{
-    string NodeID = 1;
+    int32 NodeID = 1;
     int32 CurrentTerm = 2;
     int32 ack = 3;
     bool success = 4;

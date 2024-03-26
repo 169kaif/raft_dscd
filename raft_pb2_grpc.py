@@ -20,11 +20,6 @@ class ServicesStub(object):
                 request_serializer=raft__pb2.ServeClientArgs.SerializeToString,
                 response_deserializer=raft__pb2.ServeClientReply.FromString,
                 )
-        self.AppendEntries = channel.unary_unary(
-                '/raft.Services/AppendEntries',
-                request_serializer=raft__pb2.AppendEntriesArgs.SerializeToString,
-                response_deserializer=raft__pb2.AppendEntriesReply.FromString,
-                )
         self.RequestVote = channel.unary_unary(
                 '/raft.Services/RequestVote',
                 request_serializer=raft__pb2.RequestVoteArgs.SerializeToString,
@@ -45,13 +40,6 @@ class ServicesServicer(object):
         """client -> requests certain data from the server
         server -> replies w/ data, leader id, bool variable depicting success or failure
 
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def AppendEntries(self, request, context):
-        """invoked by leader to replicate log entries and to send heartbeats
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -78,11 +66,6 @@ def add_ServicesServicer_to_server(servicer, server):
                     servicer.ServeClient,
                     request_deserializer=raft__pb2.ServeClientArgs.FromString,
                     response_serializer=raft__pb2.ServeClientReply.SerializeToString,
-            ),
-            'AppendEntries': grpc.unary_unary_rpc_method_handler(
-                    servicer.AppendEntries,
-                    request_deserializer=raft__pb2.AppendEntriesArgs.FromString,
-                    response_serializer=raft__pb2.AppendEntriesReply.SerializeToString,
             ),
             'RequestVote': grpc.unary_unary_rpc_method_handler(
                     servicer.RequestVote,
@@ -119,23 +102,6 @@ class Services(object):
         return grpc.experimental.unary_unary(request, target, '/raft.Services/ServeClient',
             raft__pb2.ServeClientArgs.SerializeToString,
             raft__pb2.ServeClientReply.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def AppendEntries(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/raft.Services/AppendEntries',
-            raft__pb2.AppendEntriesArgs.SerializeToString,
-            raft__pb2.AppendEntriesReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

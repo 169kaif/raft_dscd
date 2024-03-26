@@ -79,12 +79,6 @@ class Node(raft_pb2_grpc.ServicesServicer):
         server.wait_for_termination()
 
     def ServeClient(self, request, context):
-        """client -> requests certain data from the server
-        server -> replies w/ data, leader id, bool variable depicting success or failure
-
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
 
         message = request.Request
         req_action = message[:3]
@@ -115,21 +109,85 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 return serveclient_reply
             
         else:
+            pass
             # if requested action is GET (LEADER LEASE IMPLEMENTATION NEEDED)
-                
+        
+    def AppendEntries(self,prefixLen,LeaderCommit,suffix):
 
-                
+        if (len(suffix) > 0 and len(self.log)>prefixLen):
+            index=min(len(self.log), prefixLen+len(suffix)) - 1
+            
+            if(self.log[index][-1]!=suffix[index-prefixLen][-1]):
+                self.log=self.log[:prefixLen]
+
+        if(prefixLen+len(suffix)>len(self.log)):
+            for i in range(len(self.log)-prefixLen,len(suffix)):
+                self.log.append(suffix[i])
+
+        if (LeaderCommit > self.commit_length):
+
+            for i in range(self.commit_length, LeaderCommit):
+
+                #update database
+                command = self.log[i]
+                command = command.split()
+
+                var_name = command[1]
+                var_value = command[2]
+
+                self.database[var_name] = var_value
+
+            self.commit_length = LeaderCommit
+         
     def ReplicateLogRequest(self, request, context):
+
         
-        
-        
-        
-    def AppendEntries(self, request, context):
-        """invoked by leader to replicate log entries and to send heartbeats
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        LeaderID = request.LeaderID
+        Term = request.Term
+        PrefixLength = request.PrefixLength
+        PrefixTerm = request.PrefixTerm
+        CommitLength = request.CommitLength
+        Suffix = request.Suffix
+
+        if (Term > self.current_term):
+            self.current_term = Term
+            self.voted_for = None
+            #election timer canceled
+
+        if (Term == self.current_term):
+            self.current_role = "follower"
+            self.current_leader = LeaderID
+
+        #check if log is ok
+        logok = ((len(self.log)>=PrefixLength) and (PrefixLength==0 or self.log[PrefixLength-1][-1]==PrefixTerm))
+
+        #init replicate log response
+        replicate_log_response = raft_pb2.ReplicateLogResponse()
+
+        if (Term==self.current_term and logok):
+            
+            #call append entries
+            ack=PrefixLength+len(Suffix)
+            
+            #populate log response
+            replicate_log_response.NodeID = self.node_id
+            replicate_log_response.CurrentTerm = self.current_leader
+            replicate_log_response.ack = ack
+            replicate_log_response.success = True
+
+            #send log response
+            return replicate_log_response
+
+        else:
+
+            #populate log response
+            replicate_log_response.NodeID = self.node_id
+            replicate_log_response.CurrentTerm = self.current_leader
+            replicate_log_response.ack = 0
+            replicate_log_response.Success = False
+
+            #send diff log response
+            return replicate_log_response
 
     def RequestVote(self, request, context):
         """invoked by node when in candidate set to request for votes
@@ -209,7 +267,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         with grpc.insecure_channel(self.peer_addresses[follower_id]) as channel:
                 stub = raft_pb2.ServicesStub(channel)
                 try:
-                    req_msg = raft_pb2.ReplicateLogArgs(Term = str(self.current_term), LeaderID = str(self.current_leader), PrefixLength = str(prefixlen), PrefixTerm = str(prefixterm), CommitLength = str(self.commit_length), Suffix = sending_suffix)
+                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix)
                     response = stub.ReplicateLogRequest(req_msg)
                 except grpc.RpcError as e:
                     print(f"Failed to send Vote Request to {follower_id}")
@@ -254,7 +312,8 @@ def nodeClient(Node):
                 
                 #if higher term recieved, step down to follower state 
                 #OR if election successful, transition to leader state
-                if (Node.current_role != "follower"):
+                #OR if some other node replies with a higher term
+                if ((Node.current_role != "candidate") or (Node.votedFor != Node.node_id)):
                     break
                 
                 #if election times out, send message again
