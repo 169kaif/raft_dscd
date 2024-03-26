@@ -191,6 +191,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         CommitLength = request.CommitLength
         Suffix = request.Suffix
         Suffix=[(x.split('|')[0],x.split('|')[1]) for x in Suffix]
+        self.PrevLease=request.leaseReminder
 
         if (Term > self.current_term):
             self.current_term = Term
@@ -382,7 +383,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         with grpc.insecure_channel(self.peer_addresses[follower_id]) as channel:
                 stub = raft_pb2.ServicesStub(channel)
                 try:
-                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseRemainder=duration)
+                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseReminder=duration)
                     response = stub.ReplicateLogRequest(req_msg)
 
                     # message ReplicateLogResponse{
