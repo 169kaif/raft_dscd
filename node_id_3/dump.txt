@@ -1,0 +1,3 @@
+Node 3 election timer timed out, Starting election
+Vote granted for Node 1 in term 2
+Node 3 election timer timed out, Starting election

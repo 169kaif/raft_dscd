@@ -9,7 +9,7 @@ import grpc
 import raft_pb2
 import raft_pb2_grpc
 
-LEASE_TIME = 2.5
+LEASE_TIME = 8
 
 class Node(raft_pb2_grpc.ServicesServicer):
     
@@ -41,8 +41,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
         #init database to store key value pairs
         self.database={}
         
-        self.election_period_ms = randint(1, 5)
-        self.rpc_period_ms = 3
+        self.election_period_ms = randint(10, 15)
+        self.rpc_period_ms = 10
         self.last_heard = time.monotonic()
         self.election_timeout=-1
         self.count_for_success_heartbeat=0
@@ -326,11 +326,15 @@ class Node(raft_pb2_grpc.ServicesServicer):
     #method to request votes from all peers
     def request_vote(self):
         reply=""
-        for id,address in self.peer_addresses:
+        for id,address in self.peer_addresses.items():
             with grpc.insecure_channel(address) as channel:
-                stub = raft_pb2.ServicesStub(channel)
+                stub = raft_pb2_grpc.ServicesStub(channel)
                 try:
-                    req_msg = raft_pb2.RequestVoteArgs(Term = str(self.current_term), CandidateID = str(self.node_id), LastLogIndex = str(len(self.log)-1), LastLogTerm = self.log[-1])
+                    if(len(self.log)==0):
+                        req_msg = raft_pb2.RequestVoteArgs(Term = self.current_term, CandidateID = self.node_id, LastLogIndex = len(self.log), LastLogTerm =0)
+                    else:
+                        req_msg = raft_pb2.RequestVoteArgs(Term = self.current_term, CandidateID = self.node_id, LastLogIndex = len(self.log), LastLogTerm = self.log[-1][-1])
+                    
                     response = stub.RequestVote(req_msg)
                     response_term = response.Term
                     response_vote = response.VoteGranted
@@ -340,10 +344,10 @@ class Node(raft_pb2_grpc.ServicesServicer):
                             self.current_role = "leader"
                             self.log.append(("NO-OP", self.current_term))
 
-                            if (Node.current_role == "leader"):
-                                print(f'Node {Node.id} became the leader for term {Node.current_term}')
+                            if (self.current_role == "leader"):
+                                print(f'Node {self.node_id} became the leader for term {self.current_term}')
                                 with open('dump.txt','a') as f:
-                                    f.write(f'Node {Node.id} became the leader for term {Node.current_term}\n')
+                                    f.write(f'Node {self.node_id} became the leader for term {self.current_term}\n')
 
                             self.current_leader = self.node_id
                             self.voted_for = None
@@ -407,7 +411,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         if prefixlen>0:
             prefixterm=self.log[prefixlen-1][-1]
         with grpc.insecure_channel(self.peer_addresses[follower_id]) as channel:
-                stub = raft_pb2.ServicesStub(channel)
+                stub = raft_pb2_grpc.ServicesStub(channel)
                 try:
                     req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseReminder=duration)
                     response = stub.ReplicateLogRequest(req_msg)
@@ -513,24 +517,31 @@ def nodeClient(Node):
             Node.current_role = "candidate"
 
         elif Node.current_role == "candidate":
+            print(f"Node {Node.node_id} is in candidate state.")
 
             #start election timer
             election_start_time = time.monotonic()
+
+            #set voted for to itself
+            Node.voted_for = Node.node_id
             
             #set bool variable to enter for the first time
             first_election = True
             
             while (True):
+
+                print("inside election loop")
                 
                 #if higher term recieved, step down to follower state 
                 #OR if election successful, transition to leader state
                 #OR if some other node replies with a higher term
                         
                 if ((Node.current_role != "candidate") or (Node.voted_for != Node.node_id)):
+                    print("inside first break")
                     break
                 
                 #if election times out, send message again
-                if (first_election or (time.monotonic() - election_start_time > Node.elections_period_ms)):
+                if (first_election or (time.monotonic() - election_start_time > Node.election_period_ms)):
 
                     if (first_election):
                         first_election = False
@@ -548,14 +559,14 @@ def nodeClient(Node):
                     Node.votes_received.add(Node.node_id)
 
                     #check last term
-                    Node.last_term = None
+                    Node.last_term = 0
                     if (len(Node.log) > 0):
-                        Node.last_term = Node.log[-1] 
+                        Node.last_term = Node.log[-1][-1]
                 
                     #request vote from all nodes inside a while loop
                     
                     reply=Node.request_vote()
-                    if(reply=="Success" and (time.monotonic() - election_start_time)< Node.elections_period_ms):
+                    if(reply=="Success" and (time.monotonic() - election_start_time)< Node.election_period_ms):
                         for id in peer_addresses.keys():
                             Node.sent_length[id]=len(Node.log)
                             Node.acked_length[id]=0

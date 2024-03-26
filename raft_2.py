@@ -9,7 +9,7 @@ import grpc
 import raft_pb2
 import raft_pb2_grpc
 
-LEASE_TIME = 2.5
+LEASE_TIME = 8
 
 class Node(raft_pb2_grpc.ServicesServicer):
     
@@ -41,8 +41,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
         #init database to store key value pairs
         self.database={}
         
-        self.election_period_ms = randint(1, 5)
-        self.rpc_period_ms = 3
+        self.election_period_ms = randint(10, 15)
+        self.rpc_period_ms = 10
         self.last_heard = time.monotonic()
         self.election_timeout=-1
         self.count_for_success_heartbeat=0
@@ -340,10 +340,10 @@ class Node(raft_pb2_grpc.ServicesServicer):
                             self.current_role = "leader"
                             self.log.append(("NO-OP", self.current_term))
 
-                            if (Node.current_role == "leader"):
-                                print(f'Node {Node.id} became the leader for term {Node.current_term}')
+                            if (self.current_role == "leader"):
+                                print(f'Node {self.node_id} became the leader for term {self.current_term}')
                                 with open('dump.txt','a') as f:
-                                    f.write(f'Node {Node.id} became the leader for term {Node.current_term}\n')
+                                    f.write(f'Node {self.node_id} became the leader for term {self.current_term}\n')
 
                             self.current_leader = self.node_id
                             self.voted_for = None

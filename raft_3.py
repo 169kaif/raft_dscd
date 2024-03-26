@@ -9,7 +9,7 @@ import grpc
 import raft_pb2
 import raft_pb2_grpc
 
-LEASE_TIME = 2500
+LEASE_TIME = 8
 
 class Node(raft_pb2_grpc.ServicesServicer):
     
@@ -41,8 +41,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
         #init database to store key value pairs
         self.database={}
         
-        self.election_period_ms = randint(1000, 5000)
-        self.rpc_period_ms = 3000
+        self.election_period_ms = randint(10, 15)
+        self.rpc_period_ms = 10
         self.last_heard = time.monotonic()
         self.election_timeout=-1
         self.count_for_success_heartbeat=0
@@ -126,7 +126,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
                 #replicate log to followers
                 for follower in self.peer_addresses.keys():
-                    self.replicateLog(follower)
+                    self.replicateLog(follower,)
 
                 serveclient_reply.Data = ""
                 serveclient_reply.LeaderID = self.current_leader
@@ -340,10 +340,10 @@ class Node(raft_pb2_grpc.ServicesServicer):
                             self.current_role = "leader"
                             self.log.append(("NO-OP", self.current_term))
 
-                            if (Node.current_role == "leader"):
-                                print(f'Node {Node.id} became the leader for term {Node.current_term}')
+                            if (self.current_role == "leader"):
+                                print(f'Node {self.node_id} became the leader for term {self.current_term}')
                                 with open('dump.txt','a') as f:
-                                    f.write(f'Node {Node.id} became the leader for term {Node.current_term}\n')
+                                    f.write(f'Node {self.node_id} became the leader for term {self.current_term}\n')
 
                             self.current_leader = self.node_id
                             self.voted_for = None
@@ -526,7 +526,7 @@ def nodeClient(Node):
                 #OR if election successful, transition to leader state
                 #OR if some other node replies with a higher term
                         
-                if ((Node.current_role != "candidate") or (Node.votedFor != Node.node_id)):
+                if ((Node.current_role != "candidate") or (Node.voted_for != Node.node_id)):
                     break
                 
                 #if election times out, send message again
@@ -541,7 +541,7 @@ def nodeClient(Node):
                     Node.current_term += 1
 
                     #vote for self, need to, WRITE TO LOG AS WELL 
-                    Node.votedFor = Node.node_id
+                    Node.voted_for = Node.node_id
 
                     #clear and add vote to votes_received
                     Node.votes_received.clear()
