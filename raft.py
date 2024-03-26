@@ -567,5 +567,9 @@ if __name__=="main":
     node_id = sys.argv[1]
     port = sys.argv[2]
     peer_addresses = {2:"", 3:""}
-    node_RAFT = Node(node_id, peer_addresses)
-    #on 2 different threads to handle client and server
+    node = Node(node_id, peer_addresses)
+
+    #spawn 2 different threads to handle client and server
+    node.startServer()
+    client_thread = threading.Thread(target=nodeClient, args=(node,))
+    client_thread.start()
