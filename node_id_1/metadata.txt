@@ -1,0 +1,3 @@
+commitLength: 0
+Term: 9
+NodeID: 1

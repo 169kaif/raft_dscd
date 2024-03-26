@@ -28,7 +28,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         self.peer_addresses = peer_addresses
         self.Haslease=False
         self.remaining_time=0
-
+        self.Lease_time=8
         #init sent length
         self.sent_length = {}
         for node in peer_addresses.keys():
@@ -370,6 +370,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                         return reply
                     
                 except grpc.RpcError as e:
+                    print("Request Vote RPC failed ",e)
                     print(f"Error occurred while sending RPC to Node {id}.")
                     with open('dump.txt','a') as f:
                         f.write(f"Error occurred while sending RPC to Node {id}.\n")
@@ -405,7 +406,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 break                
 
     def replicateLog(self,follower_id):
-        prefixlen=self.sent_length[int(follower_id)-1]
+        prefixlen=self.sent_length[int(follower_id)]
         suffix=[self.log[i] for i in range(prefixlen,len(self.log))]
         sending_suffix=[i[0]+'|'+str(i[1]) for i in suffix]
         prefixterm=0
@@ -414,7 +415,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         with grpc.insecure_channel(self.peer_addresses[follower_id]) as channel:
                 stub = raft_pb2_grpc.ServicesStub(channel)
                 try:
-                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseReminder=self.remaining_time)
+                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLen = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseReminder=self.remaining_time)
                     response = stub.ReplicateLogRequest(req_msg)
 
                     # message ReplicateLogResponse{
@@ -451,6 +452,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                     self.write_metadata()
 
                 except grpc.RpcError as e:
+                    print("Replicate log RPC failed ",e)
                     print(f"Error occurred while sending RPC to Node {follower_id}.")
                     with open('dump.txt','a') as f:
                         f.write(f"Error occurred while sending RPC to Node {follower_id}.\n")
@@ -467,12 +469,12 @@ def nodeClient(Node):
                 pass
             else:
                 print(f"New Leader waiting for Old Leader Lease to timeout.")
-                while((time.monotonic-current_time)-Node.PrevLease>0):
+                while((time.monotonic()-current_time)-Node.PrevLease>0):
                     break
             Node.Haslease=True
             while(True):
     
-                if(time.monotonic-current_time>Node.Lease_time):
+                if(time.monotonic()-current_time>Node.Lease_time):
 
                     print(f"Leader {Node.node_id} lease Renewal failed...stepping down")
                     with open("dump.txt", "a") as f:
@@ -496,12 +498,12 @@ def nodeClient(Node):
                         f.write(f"Leader {Node.node_id} sending heartbeat and renewing lease.\n")
                     
                     for i in Node.peer_addresses.keys():
-                        remaining=time.monotonic-current_time-Node.Lease_Time
+                        remaining=time.monotonic()-current_time-Node.Lease_time
                         Node.remaining_time=remaining
                         Node.replicatelog(i)
                     if(Node.count_for_success_heartbeat>=len(Node.peer_addresses//2 +1)):
                         Node.count_for_success_heartbeat=0
-                        Node.Lease_Time=LEASE_TIME
+                        Node.Lease_time=LEASE_TIME
                     current_time = time.monotonic()
 
 
@@ -533,7 +535,7 @@ def nodeClient(Node):
             
             while (True):
 
-                print("inside election loop")
+
                 
                 #if higher term recieved, step down to follower state 
                 #OR if election successful, transition to leader state
