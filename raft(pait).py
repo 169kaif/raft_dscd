@@ -257,6 +257,26 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 except grpc.RpcError as e:
                     print(f"Failed to send Vote Request to {address}")
 
+    def CommitLogEntries(self):
+        while self.commit_length<len(self.log):
+            acks=0
+            for id in self.peer_addresses.keys():
+                if self.acked_length[id]>self.commit_length:
+                    acks+=1
+            if acks>=(len(self.peer_addresses)+2)/2:
+
+                #update database
+                command = self.log[self.commit_length]
+                command = command.split()
+
+                var_name = command[1]
+                var_value = command[2]
+
+                self.database[var_name] = var_value
+                self.commit_length+=1
+            else:
+                break                
+
     def replicateLog(self,follower_id):
         prefixlen=self.sent_length[int(follower_id)-1]
         suffix=[self.log[i] for i in range(prefixlen,len(self.log))]
@@ -269,10 +289,35 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 try:
                     req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix)
                     response = stub.ReplicateLogRequest(req_msg)
+
+                    # message ReplicateLogResponse{
+                    # int32 NodeID = 1;
+                    # int32 CurrentTerm = 2;
+                    # int32 ack = 3;
+                    # bool success = 4;
+
+                    response_current_term = response.CurrentTerm
+                    response_ack = response.ack
+                    response_success = response.success
+
+                    if (response_current_term == self.current_term and self.current_role=="leader"):
+                        if (response_success and response_ack >= self.acked_length[follower_id]):
+                            self.sent_length[follower_id] = response_ack
+                            self.acked_length[follower_id] = response_ack
+                            #commitLogEntries()
+
+                        elif (self.sent_length[follower_id] > 0):
+                            #log mismatch, so decrease sent length by 1
+                            self.sent_length[follower_id] = self.sent_length[follower_id] - 1
+                            self.replicateLog(self, follower_id)
+
+                    elif (response_current_term > self.current_term):
+                        self.current_term = response_current_term
+                        self.current_role = "follower"
+                        self.voted_for = None
+
                 except grpc.RpcError as e:
                     print(f"Failed to send Vote Request to {follower_id}")
-
-#this is "server" side basically
 
 def nodeClient(Node):
     
@@ -285,7 +330,7 @@ def nodeClient(Node):
             current_time = time.monotonic()
 
             while(True):
-                if ((time.monotonic() - current_time) > 100):
+                if ((time.monotonic() - current_time) > 300):
                     for i in Node.peer_addresses.keys():
                         Node.replicatelog(i)
                     current_time = time.monotonic()
