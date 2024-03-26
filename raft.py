@@ -372,7 +372,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
             else:
                 break                
 
-    def replicateLog(self,follower_id):
+    def replicateLog(self,follower_id,duration):
         prefixlen=self.sent_length[int(follower_id)-1]
         suffix=[self.log[i] for i in range(prefixlen,len(self.log))]
         sending_suffix=[i[0]+'|'+str(i[1]) for i in suffix]
@@ -382,7 +382,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         with grpc.insecure_channel(self.peer_addresses[follower_id]) as channel:
                 stub = raft_pb2.ServicesStub(channel)
                 try:
-                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix)
+                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLength = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseRemainder=duration)
                     response = stub.ReplicateLogRequest(req_msg)
 
                     # message ReplicateLogResponse{
@@ -407,7 +407,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                         elif (self.sent_length[follower_id] > 0):
                             #log mismatch, so decrease sent length by 1
                             self.sent_length[follower_id] = self.sent_length[follower_id] - 1
-                            self.replicateLog(self, follower_id)
+                            self.replicateLog(self, follower_id,duration)
 
                     elif (response_current_term > self.current_term):
                         self.current_term = response_current_term
@@ -462,7 +462,8 @@ def nodeClient(Node):
                         f.write(f"Leader {Node.node_id} sending heartbeat and renewing lease")
                     
                     for i in Node.peer_addresses.keys():
-                        Node.replicatelog(i)
+                        remaining=time.monotonic-current_time-Node.Lease_Time
+                        Node.replicatelog(i,remaining)
                     if(Node.count_for_success_heartbeat>=len(Node.peer_addresses//2 +1)):
                         Node.count_for_success_heartbeat=0
                         Node.Lease_Time=LEASE_TIME
