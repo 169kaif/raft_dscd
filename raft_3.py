@@ -49,7 +49,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
         node_log_location = f"node_id_{node_id}"
 
-        if (os.exists(node_log_location) == False):
+        if (os.path.exists(node_log_location) == False):
             
             #make dir
             os.mkdir(node_log_location)
@@ -59,9 +59,9 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
             #init persistent files to dir
             with open("metadata.txt", "w") as f:
-                f.write("commitLength: 0")
-                f.write("Term: 0")
-                f.write(f"NodeID: {node_id}")
+                f.write("commitLength: 0\n")
+                f.write("Term: 0\n")
+                f.write(f"NodeID: {node_id}\n")
 
             with open("logs.txt", "w") as f:
                 pass
@@ -81,7 +81,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 self.node_id = int(metadata[2].split(": ")[1])
 
             #restore log
-            with open("log.txt", "r") as f:
+            with open("logs.txt", "r") as f:
                 logs=f.readlines()
                 for line in logs:
                     line = line.split()
@@ -94,9 +94,9 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
     def write_metadata(self):
         with open("metadata.txt", "w") as f:
-            f.write(f"commitLength: {self.commit_length}")
-            f.write(f"Term: {self.current_term}")
-            f.write(f"NodeID: {node_id}")
+            f.write(f"commitLength: {self.commit_length}\n")
+            f.write(f"Term: {self.current_term}\n")
+            f.write(f"NodeID: {node_id}\n")
 
     def startServer(self, port):
         server = grpc.server(futures.ThreadPoolExecutor(max_workers=5))
@@ -115,7 +115,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
         print(f"Node {self.node_id} (leader) received an {message} request.")
         with open("dump.txt", "a") as f:
-            f.write(f"Node {self.node_id} (leader) received an {message} request.")
+            f.write(f"Node {self.node_id} (leader) received an {message} request.\n")
 
         #check requested action
         if (req_action == "SET"):
@@ -189,11 +189,11 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
                 #append to persistent log.txt
                 with open("logs.txt", "a") as f:
-                    f.append(command+f" {self.current_term}")
+                    f.write(command+f" {self.current_term}\n")
 
                 print(f"Node {self.node_id} (follower) committed the entry {command} to the state machine.")
                 with open("dump.txt", "a") as f:
-                    f.write(f"Node {self.node_id} (follower) committed the entry {command} to the state machine.")
+                    f.write(f"Node {self.node_id} (follower) committed the entry {command} to the state machine.\n")
                     
                 #update database
                 command = command.split()
@@ -241,7 +241,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
             
             print(f"Node {self.node_id} accepted AppendEntries RPC from {self.current_leader}.")
             with open("dump.txt", "a") as f:
-                f.write(f"Node {self.node_id} accepted AppendEntries RPC from {self.current_leader}.")
+                f.write(f"Node {self.node_id} accepted AppendEntries RPC from {self.current_leader}.\n")
 
             #call append entries
             ack=PrefixLength+len(Suffix)
@@ -260,7 +260,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
             print(f"Node {self.node_id} rejected AppendEntries RPC from {self.current_leader}.")
             with open("dump.txt", "a") as f:
-                f.write(f"Node {self.node_id} rejected AppendEntries RPC from {self.current_leader}.")
+                f.write(f"Node {self.node_id} rejected AppendEntries RPC from {self.current_leader}.\n")
 
             #populate log response
             replicate_log_response.NodeID = self.node_id
@@ -304,7 +304,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
             print(f"Vote granted for Node {candidateID} in term {self.current_term}")
             with open("dump.txt", "a") as f:
-                f.write(f"Vote granted for Node {candidateID} in term {self.current_term}")
+                f.write(f"Vote granted for Node {candidateID} in term {self.current_term}\n")
         
         else:
             server_response.Term=self.current_term
@@ -312,7 +312,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
             print(f"Vote denied for Node {candidateID} in term {self.current_term}")
             with open("dump.txt", "a") as f:
-                f.write(f"Vote denied for Node {candidateID} in term {self.current_term}")
+                f.write(f"Vote denied for Node {candidateID} in term {self.current_term}\n")
 
         return server_response
     
@@ -343,7 +343,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                             if (Node.current_role == "leader"):
                                 print(f'Node {Node.id} became the leader for term {Node.current_term}')
                                 with open('dump.txt','a') as f:
-                                    f.write(f'Node {Node.id} became the leader for term {Node.current_term}')
+                                    f.write(f'Node {Node.id} became the leader for term {Node.current_term}\n')
 
                             self.current_leader = self.node_id
                             self.voted_for = None
@@ -367,7 +367,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 except grpc.RpcError as e:
                     print(f"Error occurred while sending RPC to Node {id}.")
                     with open('dump.txt','a') as f:
-                        f.write(f"Error occurred while sending RPC to Node {id}.")
+                        f.write(f"Error occurred while sending RPC to Node {id}.\n")
 
     def CommitLogEntries(self):
         while self.commit_length<len(self.log):
@@ -385,7 +385,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 
                 #append to persistent log
                 with open("logs.txt", "a") as f:
-                    f.write(command + f" {self.current_term}")
+                    f.write(command + f" {self.current_term}\n")
 
                 command = command.split()
 
@@ -447,11 +447,11 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 except grpc.RpcError as e:
                     print(f"Error occurred while sending RPC to Node {follower_id}.")
                     with open('dump.txt','a') as f:
-                        f.write(f"Error occurred while sending RPC to Node {follower_id}.")
+                        f.write(f"Error occurred while sending RPC to Node {follower_id}.\n")
 
 
 def nodeClient(Node):
-    
+    print("hi")
     while True:
         #check current role
         if Node.current_role == "leader":
@@ -470,7 +470,7 @@ def nodeClient(Node):
 
                     print(f"Leader {Node.node_id} lease Renewal failed...stepping down")
                     with open("dump.txt", "a") as f:
-                        f.write(f"Leader {Node.node_id} lease Renewal failed...stepping down")
+                        f.write(f"Leader {Node.node_id} lease Renewal failed...stepping down\n")
                         Node.Haslease=False
 
                     Node.current_role = "follower"
@@ -485,9 +485,9 @@ def nodeClient(Node):
                 #sending heartbeat and renewing lease
                 if ((time.monotonic() - current_time) > 300):
                 
-                    print(f"Leader {Node.node_id} sending heartbeat and renewing lease")
+                    print(f"Leader {Node.node_id} sending heartbeat and renewing lease.")
                     with open("dump.txt", "a") as f:
-                        f.write(f"Leader {Node.node_id} sending heartbeat and renewing lease")
+                        f.write(f"Leader {Node.node_id} sending heartbeat and renewing lease.\n")
                     
                     for i in Node.peer_addresses.keys():
                         remaining=time.monotonic-current_time-Node.Lease_Time
@@ -508,7 +508,7 @@ def nodeClient(Node):
             #transition to candidate state when timeout
             print(f"Node {Node.node_id} election timer timed out, Starting election")
             with open("dump.txt", "a") as f:
-                f.write(f"Node {Node.node_id} election timer timed out, Starting election")
+                f.write(f"Node {Node.node_id} election timer timed out, Starting election\n")
             
             Node.current_role = "candidate"
 
@@ -563,13 +563,14 @@ def nodeClient(Node):
                         break
 
 
-if __name__=="main":
-    node_id = sys.argv[1]
-    port = sys.argv[2]
+if __name__ == '__main__':
+
+    node_id = 3
+    port = 5058
     peer_addresses = {1:"localhost:5056", 2:"localhost:5057"}
     node = Node(node_id, peer_addresses)
 
     #spawn 2 different threads to handle client and server
-    node.startServer(port)
     client_thread = threading.Thread(target=nodeClient, args=(node,))
     client_thread.start()
+    node.startServer(port)
