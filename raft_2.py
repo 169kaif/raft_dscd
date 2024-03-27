@@ -199,8 +199,9 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 #update database
                 command = command.split()
 
-                var_name = command[1]
-                var_value = command[2]
+                if (command[0] == "SET"):
+                    var_name = command[1]
+                    var_value = command[2]
                 
                 #check for SET COMMAND
                 if (command[0] == "SET"):
@@ -339,9 +340,10 @@ class Node(raft_pb2_grpc.ServicesServicer):
                     response = stub.RequestVote(req_msg)
                     response_term = response.Term
                     response_vote = response.VoteGranted
+
                     if (self.current_role=="candidate" and response_term==self.current_term and response_vote==True):
                         self.votes_received.add(id)
-                        if (len(self.votes_received) > (len(self.peer_addresses)+2)//2):
+                        if ((len(self.votes_received)) > ((len(self.peer_addresses)+2)//2)):
                             self.current_role = "leader"
                             self.log.append(("NO-OP", self.current_term))
 
@@ -370,6 +372,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                         return reply
                     
                 except grpc.RpcError as e:
+                    print("Request Vote RPC failed ",e)
                     print(f"Error occurred while sending RPC to Node {id}.")
                     with open('dump.txt','a') as f:
                         f.write(f"Error occurred while sending RPC to Node {id}.\n")
@@ -386,7 +389,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
                 print(f"Node {self.node_id} (leader) committed the entry {command} to the state machine.")
                 with open("dump.txt", "a") as f:
-                    print(f"Node {self.node_id} (leader) committed the entry {command} to the state machine.")
+                    f.write(f"Node {self.node_id} (leader) committed the entry {command} to the state machine.")
                 
                 #append to persistent log
                 with open("logs.txt", "a") as f:
@@ -394,8 +397,9 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
                 command = command.split()
 
-                var_name = command[1]
-                var_value = command[2]
+                if (command[0] == "SET"):
+                    var_name = command[1]
+                    var_value = command[2]
 
                 if (command[0] == "SET"):
                     self.database[var_name] = var_value
@@ -440,7 +444,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                             #log mismatch, so decrease sent length by 1
                             self.sent_length[follower_id] = self.sent_length[follower_id] - 1
 
-                            self.replicateLog(self, follower_id)
+                            self.replicateLog(follower_id)
 
                     elif (response_current_term > self.current_term):
                         self.current_term = response_current_term
@@ -451,6 +455,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                     self.write_metadata()
 
                 except grpc.RpcError as e:
+                    print("Replicate log RPC failed ",e)
                     print(f"Error occurred while sending RPC to Node {follower_id}.")
                     with open('dump.txt','a') as f:
                         f.write(f"Error occurred while sending RPC to Node {follower_id}.\n")
@@ -459,6 +464,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
 def nodeClient(Node):
 
     while True:
+
+        print(Node.log)
         #check current role
         if Node.current_role == "leader":
             #replicate log periodically
@@ -574,7 +581,6 @@ def nodeClient(Node):
                             Node.sent_length[id]=len(Node.log)
                             Node.acked_length[id]=0
                             Node.replicateLog(id)
-
                         break
 
 
@@ -589,3 +595,4 @@ if __name__ == '__main__':
     client_thread = threading.Thread(target=nodeClient, args=(node,))
     client_thread.start()
     node.startServer(port)
+    

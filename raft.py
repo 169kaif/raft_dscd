@@ -187,7 +187,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
             for i in range(self.commit_length, LeaderCommit):
 
                 command = self.log[i][0]
-                print(command)
+
                 #append to persistent log.txt
                 with open("logs.txt", "a") as f:
                     f.write(command+f" {self.current_term}\n")
@@ -199,8 +199,9 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 #update database
                 command = command.split()
 
-                var_name = command[1]
-                var_value = command[2]
+                if (command[0] == "SET"):
+                    var_name = command[1]
+                    var_value = command[2]
                 
                 #check for SET COMMAND
                 if (command[0] == "SET"):
@@ -339,9 +340,10 @@ class Node(raft_pb2_grpc.ServicesServicer):
                     response = stub.RequestVote(req_msg)
                     response_term = response.Term
                     response_vote = response.VoteGranted
+
                     if (self.current_role=="candidate" and response_term==self.current_term and response_vote==True):
                         self.votes_received.add(id)
-                        if (len(self.votes_received) > (len(self.peer_addresses)+2)//2):
+                        if ((len(self.votes_received)) > ((len(self.peer_addresses)+2)//2)):
                             self.current_role = "leader"
                             self.log.append(("NO-OP", self.current_term))
 
@@ -395,8 +397,9 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
                 command = command.split()
 
-                var_name = command[1]
-                var_value = command[2]
+                if (command[0] == "SET"):
+                    var_name = command[1]
+                    var_value = command[2]
 
                 if (command[0] == "SET"):
                     self.database[var_name] = var_value
@@ -461,6 +464,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
 def nodeClient(Node):
 
     while True:
+
+        print(Node.log)
         #check current role
         if Node.current_role == "leader":
             #replicate log periodically

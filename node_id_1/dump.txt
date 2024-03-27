@@ -1,3 +1,0 @@
-Node 1 election timer timed out, Starting election
-Node 1 became the leader for term 1
-Node 1 (leader) committed the entry NO-OP to the state machine.

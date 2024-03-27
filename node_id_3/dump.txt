@@ -1,4 +1,0 @@
-Vote granted for Node 1 in term 1
-Node 3 rejected AppendEntries RPC from 1.
-Node 3 accepted AppendEntries RPC from 1.
-Node 3 election timer timed out, Starting election
