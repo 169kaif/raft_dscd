@@ -343,7 +343,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
                     if (self.current_role=="candidate" and response_term==self.current_term and response_vote==True):
                         self.votes_received.add(id)
-                        if ((len(self.votes_received)) >= ((len(self.peer_addresses)+2)//2)):
+                        if ((len(self.votes_received)) >=3):#hardcode
                             self.current_role = "leader"
                             self.log.append(("NO-OP", self.current_term))
 
@@ -382,7 +382,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
             for id in self.peer_addresses.keys():
                 if self.acked_length[id]>self.commit_length:
                     acks+=1
-            if acks>=(len(self.peer_addresses)+2)//2:
+            if acks>=3:#hardcode
 
                 command = self.log[self.commit_length][0]
 
@@ -504,7 +504,7 @@ def nodeClient(Node):
                         remaining=time.monotonic()-current_time-Node.Lease_time
                         Node.remaining_time=remaining
                         Node.replicateLog(i)
-                    if(Node.count_for_success_heartbeat>=len(Node.peer_addresses)//2 +1):
+                    if(Node.count_for_success_heartbeat>=3):#hardcode
                         Node.count_for_success_heartbeat=0
                         Node.Lease_time=LEASE_TIME
                     current_time = time.monotonic()
