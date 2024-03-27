@@ -361,7 +361,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                             self.current_role = "leader"
 
                             #must be committed to persistent log
-                            self.log.append(("NO-OP", self.current_term))
+                            # self.log.append(("NO-OP", self.current_term))
 
                             if (self.current_role == "leader"):
                                 print(f'Node {self.node_id} became the leader for term {self.current_term}')
@@ -393,7 +393,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                         f.write(f"Error occurred while sending RPC to Node {id}.\n")
 
     def CommitLogEntries(self):
-        
+
         while self.commit_length<len(self.log):
             
             acks=0
@@ -509,6 +509,11 @@ def nodeClient(Node):
                     break
 
             Node.Haslease=True
+            if (Node.Haslease):
+                print(f"Leader {Node.node_id} has lease.")
+                Node.log.append(("NO-OP", Node.current_term))
+                with open("dump.txt", "a") as f:
+                    f.write(f"Leader {Node.node_id} has lease.\n")
 
             while(True):
     
@@ -606,7 +611,7 @@ def nodeClient(Node):
                     #request vote from all nodes inside a while loop
                     
                     reply=Node.request_vote()
-                    if(reply=="Success" and (time.monotonic() - election_start_time)< Node.election_period_ms):
+                    if(reply=="Success"):
                         for id in peer_addresses.keys():
                             Node.sent_length[id]=len(Node.log)
                             Node.acked_length[id]=0

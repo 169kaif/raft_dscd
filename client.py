@@ -5,16 +5,18 @@ import raft_pb2_grpc
 if __name__ == '__main__':
 
     #hard code peer addresses
-    peer_addresses = {1:"localhost:5056", 2:"localhost:5057", 3:"localhost:5058"}
+    peer_addresses = {1:"localhost:5056", 2:"localhost:5057", 3:"localhost:5058", 4:"localhost:5059", 5:"localhost:5060"}
     
     #store current leader (initialized w/ 1)
     current_leader = 3
 
     while (True):
         req = input("Enter Request: ")
-        print("The current leader is: ", current_leader)
 
         while (True):
+
+            print("The current leader is: ", current_leader)
+            
             with grpc.insecure_channel(peer_addresses[current_leader]) as channel:
                 stub = raft_pb2_grpc.ServicesStub(channel)
                 print(type(req), req)
