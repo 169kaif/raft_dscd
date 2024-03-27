@@ -42,7 +42,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         #init database to store key value pairs
         self.database={}
         
-        self.election_period_ms = randint(10, 15)
+        self.election_period_ms = randint(15, 20)
         self.rpc_period_ms = 10
         self.last_heard = time.monotonic()
         self.election_timeout=-1
@@ -218,7 +218,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
         PrefixTerm = request.PrefixTerm
         CommitLength = request.CommitLength
         Suffix = request.Suffix
-        Suffix=[(x.split('|')[0],int(x.split('|')[1])) for x in Suffix]
+        Suffix_list = list(Suffix)
+        Suffix=[(x.split('|')[0],int(x.split('|')[1])) for x in Suffix_list]
         self.PrevLease=request.leaseReminder
 
         if (Term > self.current_term):
@@ -233,8 +234,21 @@ class Node(raft_pb2_grpc.ServicesServicer):
         #rewrite metadata to persistent memory
         self.write_metadata()
 
+        print("The current term is: ", self.current_term)
+        print("The log is: ", self.log)
+        print("The suffix is: ", Suffix)
+        print("Checking if log is ok...")
+
+        print("the length of the log is: ", len(self.log))
+        print("the prefix length is: ", PrefixLength)
+        print("the last term of the prefix is: ", PrefixTerm)
+        if (PrefixLength > 0 and len(self.log) >= PrefixLength):
+            print("the last term of the log is: ", self.log[PrefixLength-1][-1])
+
         #check if log is ok
         logok = ((len(self.log)>=PrefixLength) and (PrefixLength==0 or self.log[PrefixLength-1][-1]==PrefixTerm))
+
+        print("Log is ok: ", logok)
 
         #init replicate log response
         replicate_log_response = raft_pb2.ReplicateLogResponse()
@@ -246,8 +260,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 f.write(f"Node {self.node_id} accepted AppendEntries RPC from {self.current_leader}.\n")
 
             #call append entries
-            ack=PrefixLength+len(Suffix)
             self.AppendEntries(PrefixLength, CommitLength, Suffix)
+            ack=PrefixLength+len(Suffix)
 
             #populate log response
             replicate_log_response.NodeID = self.node_id
@@ -345,6 +359,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
                         self.votes_received.add(id)
                         if ((len(self.votes_received)) >=3):#hardcode
                             self.current_role = "leader"
+
+                            #must be committed to persistent log
                             self.log.append(("NO-OP", self.current_term))
 
                             if (self.current_role == "leader"):
@@ -353,7 +369,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                                     f.write(f'Node {self.node_id} became the leader for term {self.current_term}\n')
 
                             self.current_leader = self.node_id
-                            self.voted_for = None
+                            # self.voted_for = None
                             reply="Success"
 
                             #write metadata
@@ -377,11 +393,15 @@ class Node(raft_pb2_grpc.ServicesServicer):
                         f.write(f"Error occurred while sending RPC to Node {id}.\n")
 
     def CommitLogEntries(self):
+        
         while self.commit_length<len(self.log):
+            
             acks=0
+
             for id in self.peer_addresses.keys():
                 if self.acked_length[id]>self.commit_length:
-                    acks+=1
+                    acks += 1
+
             if acks>=2:#hardcode
 
                 command = self.log[self.commit_length][0]
@@ -408,16 +428,29 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 break                
 
     def replicateLog(self,follower_id):
-        prefixlen=self.sent_length[int(follower_id)]
+        prefixlen=self.sent_length[follower_id]
         suffix=[self.log[i] for i in range(prefixlen,len(self.log))]
         sending_suffix=[i[0]+'|'+str(i[1]) for i in suffix]
+
         prefixterm=0
         if prefixlen>0:
             prefixterm=self.log[prefixlen-1][-1]
+
         with grpc.insecure_channel(self.peer_addresses[follower_id]) as channel:
                 stub = raft_pb2_grpc.ServicesStub(channel)
                 try:
-                    req_msg = raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLen = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseReminder=self.remaining_time)
+
+                    req_msg = raft_pb2.ReplicateLogArgs()
+                    req_msg.Term = self.current_term
+                    req_msg.LeaderID = self.current_leader
+                    req_msg.PrefixLen = prefixlen
+                    req_msg.PrefixTerm = prefixterm
+                    req_msg.CommitLength = self.commit_length
+                    req_msg.Suffix.extend(sending_suffix)
+                    req_msg.leaseReminder=self.remaining_time 
+
+                    # raft_pb2.ReplicateLogArgs(Term = self.current_term, LeaderID = self.current_leader, PrefixLen = prefixlen, PrefixTerm = prefixterm, CommitLength = self.commit_length, Suffix = sending_suffix,leaseReminder=self.remaining_time)
+
                     response = stub.ReplicateLogRequest(req_msg)
 
                     # message ReplicateLogResponse{
@@ -441,8 +474,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
                         elif (self.sent_length[follower_id] > 0):
                             #log mismatch, so decrease sent length by 1
-                            self.sent_length[follower_id] = self.sent_length[follower_id] - 1
-
+                            print(f"log mismatch for {follower_id}, length of follower log is: {self.sent_length[follower_id]}")
+                            self.sent_length[follower_id] -= 1
                             self.replicateLog(follower_id)
 
                     elif (response_current_term > self.current_term):
@@ -474,7 +507,9 @@ def nodeClient(Node):
                 print(f"New Leader waiting for Old Leader Lease to timeout.")
                 while((time.monotonic()-current_time)-Node.PrevLease>0):
                     break
+
             Node.Haslease=True
+
             while(True):
     
                 if(time.monotonic()-current_time>Node.Lease_time):
@@ -537,8 +572,6 @@ def nodeClient(Node):
             first_election = True
             
             while (True):
-
-
                 
                 #if higher term recieved, step down to follower state 
                 #OR if election successful, transition to leader state
@@ -585,7 +618,7 @@ if __name__ == '__main__':
 
     node_id = 3
     port = 5058
-    peer_addresses = {1:"localhost:5056", 2:"localhost:5057", 4:"localhost:5059", 5:"localhost:5060"}
+    peer_addresses = {2:"localhost:5057", 1:"localhost:5056", 4:"localhost:5059", 5:"localhost:5060"}
     node = Node(node_id, peer_addresses)
 
     #spawn 2 different threads to handle client and serve

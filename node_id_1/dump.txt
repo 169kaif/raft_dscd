@@ -7,12 +7,3 @@ Leader 1 sending heartbeat and renewing lease.
 Leader 1 sending heartbeat and renewing lease.
 Leader 1 sending heartbeat and renewing lease.
 Leader 1 sending heartbeat and renewing lease.
-Leader 1 sending heartbeat and renewing lease.
-Leader 1 sending heartbeat and renewing lease.
-Leader 1 sending heartbeat and renewing lease.
-Leader 1 sending heartbeat and renewing lease.
-Node 1 (leader) received an SET X 4 request.
-Node 1 (leader) committed the entry SET X 4 to the state machine.Leader 1 sending heartbeat and renewing lease.
-Leader 1 sending heartbeat and renewing lease.
-Node 1 (leader) received an GET X request.
-Leader 1 sending heartbeat and renewing lease.
