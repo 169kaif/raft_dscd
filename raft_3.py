@@ -218,7 +218,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         PrefixTerm = request.PrefixTerm
         CommitLength = request.CommitLength
         Suffix = request.Suffix
-        Suffix=[(x.split('|')[0],x.split('|')[1]) for x in Suffix]
+        Suffix=[(x.split('|')[0],int(x.split('|')[1])) for x in Suffix]
         self.PrevLease=request.leaseReminder
 
         if (Term > self.current_term):
@@ -343,7 +343,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
                     if (self.current_role=="candidate" and response_term==self.current_term and response_vote==True):
                         self.votes_received.add(id)
-                        if ((len(self.votes_received)) > ((len(self.peer_addresses)+2)//2)):
+                        if ((len(self.votes_received)) >=((len(self.peer_addresses)+2)//2)):
                             self.current_role = "leader"
                             self.log.append(("NO-OP", self.current_term))
 
@@ -496,7 +496,7 @@ def nodeClient(Node):
                     break
 
                 #sending heartbeat and renewing lease
-                if ((time.monotonic() - current_time) > 300):
+                if ((time.monotonic() - current_time) > 8):
                 
                     print(f"Leader {Node.node_id} sending heartbeat and renewing lease.")
                     with open("dump.txt", "a") as f:
@@ -505,8 +505,8 @@ def nodeClient(Node):
                     for i in Node.peer_addresses.keys():
                         remaining=time.monotonic()-current_time-Node.Lease_time
                         Node.remaining_time=remaining
-                        Node.replicatelog(i)
-                    if(Node.count_for_success_heartbeat>=len(Node.peer_addresses//2 +1)):
+                        Node.replicateLog(i)
+                    if(Node.count_for_success_heartbeat>=len(Node.peer_addresses)//2 +1):
                         Node.count_for_success_heartbeat=0
                         Node.Lease_time=LEASE_TIME
                     current_time = time.monotonic()
