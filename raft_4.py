@@ -265,7 +265,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
             #populate log response
             replicate_log_response.NodeID = self.node_id
-            replicate_log_response.CurrentTerm = self.current_leader
+            replicate_log_response.CurrentTerm = self.current_term
             replicate_log_response.ack = ack
             replicate_log_response.success = True
 
@@ -280,7 +280,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
             #populate log response
             replicate_log_response.NodeID = self.node_id
-            replicate_log_response.CurrentTerm = self.current_leader
+            replicate_log_response.CurrentTerm = self.current_term
             replicate_log_response.ack = 0
             replicate_log_response.success = False
 

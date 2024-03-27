@@ -265,7 +265,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
             #populate log response
             replicate_log_response.NodeID = self.node_id
-            replicate_log_response.CurrentTerm = self.current_leader
+            replicate_log_response.CurrentTerm = self.current_term
             replicate_log_response.ack = ack
             replicate_log_response.success = True
 
@@ -280,7 +280,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
             #populate log response
             replicate_log_response.NodeID = self.node_id
-            replicate_log_response.CurrentTerm = self.current_leader
+            replicate_log_response.CurrentTerm = self.current_term
             replicate_log_response.ack = 0
             replicate_log_response.success = False
 
@@ -641,7 +641,6 @@ if __name__ == '__main__':
     port = 5060
     peer_addresses = {2:"localhost:5057", 3:"localhost:5058", 4:"localhost:5059", 1:"localhost:5056"}
     node = Node(node_id, peer_addresses)
-
     #spawn 2 different threads to handle client and serve
     client_thread = threading.Thread(target=nodeClient, args=(node,))
     client_thread.start()
