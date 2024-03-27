@@ -583,9 +583,9 @@ def nodeClient(Node):
 
 if __name__ == '__main__':
 
-    node_id = 2
-    port = 5057
-    peer_addresses = {1:"localhost:5056", 3:"localhost:5058", 4:"localhost:5059", 5:"localhost:5060"}
+    node_id = 4
+    port = 5059
+    peer_addresses = {1:"localhost:5056", 2:"localhost:5057", 3:"localhost:5058", 5:"localhost:5060"}
     node = Node(node_id, peer_addresses)
 
     #spawn 2 different threads to handle client and serve

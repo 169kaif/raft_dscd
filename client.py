@@ -8,7 +8,7 @@ if __name__ == '__main__':
     peer_addresses = {1:"localhost:5056", 2:"localhost:5057", 3:"localhost:5058"}
     
     #store current leader (initialized w/ 1)
-    current_leader = 1
+    current_leader = 3
 
     while (True):
         req = input("Enter Request: ")

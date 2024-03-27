@@ -1,0 +1,73 @@
+Node 4 rejected AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 (follower) committed the entry NO-OP to the state machine.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 (follower) committed the entry SET X 4 to the state machine.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Node 4 accepted AppendEntries RPC from 1.
+Vote denied for Node 2 in term 3
+Node 4 election timer timed out, Starting election
+Vote granted for Node 3 in term 4
+Error occurred while sending RPC to Node 1.
+Node 4 rejected AppendEntries RPC from 1.
+Vote granted for Node 5 in term 5
+Node 4 election timer timed out, Starting election
+Error occurred while sending RPC to Node 1.
+Vote denied for Node 2 in term 6
+Vote denied for Node 3 in term 6
+Vote granted for Node 2 in term 7
+Vote denied for Node 5 in term 7
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Node 4 rejected AppendEntries RPC from 2.
+Vote granted for Node 3 in term 8
+Node 4 election timer timed out, Starting election
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 2.
+Vote granted for Node 5 in term 10
+Vote granted for Node 3 in term 11
+Node 4 election timer timed out, Starting election
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 2.
+Vote denied for Node 5 in term 14
+Vote granted for Node 3 in term 14
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.
+Node 4 rejected AppendEntries RPC from 3.

@@ -585,7 +585,7 @@ if __name__ == '__main__':
 
     node_id = 1
     port = 5056
-    peer_addresses = {2:"localhost:5057", 3:"localhost:5058"}
+    peer_addresses = {2:"localhost:5057", 3:"localhost:5058", 4:"localhost:5059", 5:"localhost:5060"}
     node = Node(node_id, peer_addresses)
 
     #spawn 2 different threads to handle client and serve
