@@ -8,17 +8,19 @@ if __name__ == '__main__':
     peer_addresses = {1:"localhost:5056", 2:"localhost:5057", 3:"localhost:5058"}
     
     #store current leader (initialized w/ 1)
-    current_leader = 1
+    current_leader = 3
 
     while (True):
         req = input("Enter Request: ")
+        print("The current leader is: ", current_leader)
 
         while (True):
             with grpc.insecure_channel(peer_addresses[current_leader]) as channel:
-                stub = raft_pb2_grpc.ServicesServicer(channel)
+                stub = raft_pb2_grpc.ServicesStub(channel)
+                print(type(req), req)
                 req_message = raft_pb2.ServeClientArgs(Request = req)
 
-                req_response = raft_pb2.ServeClient(req_message)
+                req_response = stub.ServeClient(req_message)
 
                 recvd_data = req_response.Data
                 recvd_LeaderID = req_response.LeaderID

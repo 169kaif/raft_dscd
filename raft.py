@@ -343,7 +343,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
                     if (self.current_role=="candidate" and response_term==self.current_term and response_vote==True):
                         self.votes_received.add(id)
-                        if ((len(self.votes_received)) >=((len(self.peer_addresses)+2)//2)):
+                        if ((len(self.votes_received)) >= ((len(self.peer_addresses)+2)//2)):
                             self.current_role = "leader"
                             self.log.append(("NO-OP", self.current_term))
 
@@ -372,7 +372,6 @@ class Node(raft_pb2_grpc.ServicesServicer):
                         return reply
                     
                 except grpc.RpcError as e:
-                    print("Request Vote RPC failed ",e)
                     print(f"Error occurred while sending RPC to Node {id}.")
                     with open('dump.txt','a') as f:
                         f.write(f"Error occurred while sending RPC to Node {id}.\n")
@@ -455,7 +454,6 @@ class Node(raft_pb2_grpc.ServicesServicer):
                     self.write_metadata()
 
                 except grpc.RpcError as e:
-                    print("Replicate log RPC failed ",e)
                     print(f"Error occurred while sending RPC to Node {follower_id}.")
                     with open('dump.txt','a') as f:
                         f.write(f"Error occurred while sending RPC to Node {follower_id}.\n")
@@ -547,7 +545,6 @@ def nodeClient(Node):
                 #OR if some other node replies with a higher term
                         
                 if ((Node.current_role != "candidate") or (Node.voted_for != Node.node_id)):
-                    print("inside first break")
                     break
                 
                 #if election times out, send message again
