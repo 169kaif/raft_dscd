@@ -394,13 +394,22 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
     def CommitLogEntries(self):
 
+        print("Trying to commit log entries...")
+
         while self.commit_length<len(self.log):
+
+            print("loop check")
             
             acks=0
+            recvd_acks_list = []
 
             for id in self.peer_addresses.keys():
                 if self.acked_length[id]>self.commit_length:
                     acks += 1
+                    recvd_acks_list.append(id)
+
+            print("acks received for commit is: ", acks)
+            print("recvd acks list is: ", recvd_acks_list)
 
             if acks>=2:#hardcode
 
@@ -462,6 +471,11 @@ class Node(raft_pb2_grpc.ServicesServicer):
                     response_current_term = response.CurrentTerm
                     response_ack = response.ack
                     response_success = response.success
+
+                    print(f"Node {self.node_id} received response from Node {follower_id}.")
+                    print("term: ", response_current_term)
+                    print("ack: ", response_ack)
+                    print("success: ", response_success)
 
                     if(response_success):
                         self.count_for_success_heartbeat+=1
@@ -551,6 +565,7 @@ def nodeClient(Node):
 
 
         elif Node.current_role == "follower":
+            Node.Haslease=False
             Node.rpc_timeout_time = time.monotonic()
             print(f"Node {Node.node_id} is in follower state.")
             #check for rpc timeout
@@ -612,10 +627,12 @@ def nodeClient(Node):
                     
                     reply=Node.request_vote()
                     if(reply=="Success"):
-                        for id in peer_addresses.keys():
+
+                        for id in Node.peer_addresses.keys():
                             Node.sent_length[id]=len(Node.log)
                             Node.acked_length[id]=0
                             Node.replicateLog(id)
+                        print("sent lengths are: ", Node.sent_length) 
                         break
 
 
