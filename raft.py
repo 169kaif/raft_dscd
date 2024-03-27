@@ -190,7 +190,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
                 #append to persistent log.txt
                 with open("logs.txt", "a") as f:
-                    f.write(command+f" {self.current_term}\n")
+                    f.write(command+f" {self.log[i][-1]}\n")
 
                 print(f"Node {self.node_id} (follower) committed the entry {command} to the state machine.")
                 with open("dump.txt", "a") as f:
@@ -437,6 +437,10 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 break                
 
     def replicateLog(self,follower_id):
+
+        if (self.node_id == follower_id):
+            return
+
         prefixlen=self.sent_length[follower_id]
         suffix=[self.log[i] for i in range(prefixlen,len(self.log))]
         sending_suffix=[i[0]+'|'+str(i[1]) for i in suffix]

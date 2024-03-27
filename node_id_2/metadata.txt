@@ -1,3 +1,0 @@
-commitLength: 3
-Term: 11
-NodeID: 2
