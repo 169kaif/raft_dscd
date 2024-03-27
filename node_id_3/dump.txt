@@ -1,29 +1,4 @@
-Vote granted for Node 2 in term 1
+Vote granted for Node 1 in term 1
+Node 3 rejected AppendEntries RPC from 1.
+Node 3 accepted AppendEntries RPC from 1.
 Node 3 election timer timed out, Starting election
-Vote denied for Node 1 in term 2
-Vote granted for Node 2 in term 3
-Node 3 election timer timed out, Starting election
-Vote denied for Node 1 in term 4
-Vote granted for Node 2 in term 5
-Vote granted for Node 1 in term 5
-Node 3 election timer timed out, Starting election
-Vote denied for Node 2 in term 6
-Vote granted for Node 1 in term 7
-Node 3 election timer timed out, Starting election
-Vote denied for Node 2 in term 8
-Vote granted for Node 1 in term 9
-Node 3 election timer timed out, Starting election
-Vote denied for Node 2 in term 11
-Error occurred while sending RPC to Node 1.
-Error occurred while sending RPC to Node 1.
-Vote denied for Node 2 in term 12
-Error occurred while sending RPC to Node 1.
-Vote denied for Node 2 in term 13
-Error occurred while sending RPC to Node 1.
-Vote denied for Node 2 in term 14
-Error occurred while sending RPC to Node 1.
-Vote denied for Node 2 in term 15
-Error occurred while sending RPC to Node 1.
-Vote denied for Node 2 in term 16
-Error occurred while sending RPC to Node 1.
-Vote denied for Node 2 in term 17

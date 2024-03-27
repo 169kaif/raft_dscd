@@ -1,39 +1,4 @@
+Vote granted for Node 1 in term 1
+Node 2 rejected AppendEntries RPC from 1.
+Node 2 accepted AppendEntries RPC from 1.
 Node 2 election timer timed out, Starting election
-Node 2 became the leader for term 1
-Error occurred while sending RPC to Node 1.
-Error occurred while sending RPC to Node 3.
-Leader 2 lease Renewal failed...stepping down
-2 Stepping downVote denied for Node 1 in term 2
-Vote denied for Node 3 in term 2
-Node 2 election timer timed out, Starting election
-Node 2 became the leader for term 3
-Error occurred while sending RPC to Node 1.
-Error occurred while sending RPC to Node 3.
-Leader 2 lease Renewal failed...stepping down
-2 Stepping downVote denied for Node 1 in term 4
-Vote denied for Node 3 in term 4
-Node 2 election timer timed out, Starting election
-Error occurred while sending RPC to Node 1.
-Vote granted for Node 1 in term 5
-Node 2 election timer timed out, Starting election
-Vote denied for Node 3 in term 6
-Vote granted for Node 1 in term 7
-Node 2 election timer timed out, Starting election
-Vote denied for Node 3 in term 8
-Vote granted for Node 1 in term 9
-Node 2 election timer timed out, Starting election
-Error occurred while sending RPC to Node 1.
-Vote granted for Node 3 in term 11
-Node 2 election timer timed out, Starting election
-Vote denied for Node 3 in term 12
-Error occurred while sending RPC to Node 1.
-Vote denied for Node 3 in term 13
-Error occurred while sending RPC to Node 1.
-Vote denied for Node 3 in term 14
-Error occurred while sending RPC to Node 1.
-Vote denied for Node 3 in term 15
-Error occurred while sending RPC to Node 1.
-Error occurred while sending RPC to Node 1.
-Vote denied for Node 3 in term 16
-Vote denied for Node 3 in term 17
-Error occurred while sending RPC to Node 1.

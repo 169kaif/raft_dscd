@@ -187,7 +187,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
             for i in range(self.commit_length, LeaderCommit):
 
                 command = self.log[i][0]
-
+                print(command)
                 #append to persistent log.txt
                 with open("logs.txt", "a") as f:
                     f.write(command+f" {self.current_term}\n")
@@ -213,7 +213,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
         self.rpc_timeout_time = time.monotonic()
         LeaderID = request.LeaderID
         Term = request.Term
-        PrefixLength = request.PrefixLength
+        PrefixLength = request.PrefixLen
         PrefixTerm = request.PrefixTerm
         CommitLength = request.CommitLength
         Suffix = request.Suffix
@@ -267,7 +267,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
             replicate_log_response.NodeID = self.node_id
             replicate_log_response.CurrentTerm = self.current_leader
             replicate_log_response.ack = 0
-            replicate_log_response.Success = False
+            replicate_log_response.success = False
 
             #send diff log response
             return replicate_log_response
@@ -383,11 +383,11 @@ class Node(raft_pb2_grpc.ServicesServicer):
                     acks+=1
             if acks>=(len(self.peer_addresses)+2)//2:
 
-                command = self.log[self.commit_length]
+                command = self.log[self.commit_length][0]
 
                 print(f"Node {self.node_id} (leader) committed the entry {command} to the state machine.")
                 with open("dump.txt", "a") as f:
-                    print(f"Node {self.node_id} (leader) committed the entry {command} to the state machine.")
+                    f.write(f"Node {self.node_id} (leader) committed the entry {command} to the state machine.")
                 
                 #append to persistent log
                 with open("logs.txt", "a") as f:
@@ -441,7 +441,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                             #log mismatch, so decrease sent length by 1
                             self.sent_length[follower_id] = self.sent_length[follower_id] - 1
 
-                            self.replicateLog(self, follower_id)
+                            self.replicateLog(follower_id)
 
                     elif (response_current_term > self.current_term):
                         self.current_term = response_current_term
