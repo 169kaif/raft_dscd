@@ -382,7 +382,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
             for id in self.peer_addresses.keys():
                 if self.acked_length[id]>self.commit_length:
                     acks+=1
-            if acks>=3:#hardcode
+            if acks>=2:#hardcode
 
                 command = self.log[self.commit_length][0]
 
@@ -504,7 +504,7 @@ def nodeClient(Node):
                         remaining=time.monotonic()-current_time-Node.Lease_time
                         Node.remaining_time=remaining
                         Node.replicateLog(i)
-                    if(Node.count_for_success_heartbeat>=3):#hardcode
+                    if(Node.count_for_success_heartbeat>=2):#hardcode
                         Node.count_for_success_heartbeat=0
                         Node.Lease_time=LEASE_TIME
                     current_time = time.monotonic()
