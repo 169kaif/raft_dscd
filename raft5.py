@@ -485,6 +485,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                             self.acked_length[follower_id] = response_ack
                             if(isLeader):
                                 self.count_for_success_heartbeat+=1
+                            print(f"Received response from Node {follower_id}")
                             self.CommitLogEntries()
 
                         elif (self.sent_length[follower_id] > 0):
@@ -561,6 +562,7 @@ def nodeClient(Node):
                         Node.remaining_time=remaining
                         Node.replicateLog(i,True)
                     if(Node.count_for_success_heartbeat>=2):#hardcode
+                        print(f"Node heartbeat count: {Node.count_for_success_heartbeat}")
                         Node.count_for_success_heartbeat=0
                         Node.Lease_time=LEASE_TIME
                         current_time = time.monotonic()
@@ -639,9 +641,9 @@ def nodeClient(Node):
 
 if __name__ == '__main__':
 
-    node_id = 1
-    port = 5056
-    peer_addresses = {2:"localhost:5057", 3:"localhost:5058", 4:"localhost:5059", 5:"localhost:5060"}
+    node_id = 5
+    port = 5060
+    peer_addresses = {2:"localhost:5057", 1:"localhost:5056", 3:"localhost:5058", 4:"localhost:5059"}
     node = Node(node_id, peer_addresses)
 
     #spawn 2 different threads to handle client and serve
