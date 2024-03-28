@@ -255,9 +255,9 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
         if (Term==self.current_term and logok):
             
-            print(f"Node {self.node_id} accepted AppendEntries RPC from {self.current_leader}.")
+            print(f"Node {self.node_id} accepted AppendEntries RPC from {LeaderID}.")
             with open("dump.txt", "a") as f:
-                f.write(f"Node {self.node_id} accepted AppendEntries RPC from {self.current_leader}.\n")
+                f.write(f"Node {self.node_id} accepted AppendEntries RPC from {LeaderID}.\n")
 
             #call append entries
             self.AppendEntries(PrefixLength, CommitLength, Suffix)
@@ -437,9 +437,6 @@ class Node(raft_pb2_grpc.ServicesServicer):
                 break                
 
     def replicateLog(self,follower_id):
-
-        if (self.node_id == follower_id):
-            return
 
         prefixlen=self.sent_length[follower_id]
         suffix=[self.log[i] for i in range(prefixlen,len(self.log))]
