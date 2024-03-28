@@ -234,21 +234,21 @@ class Node(raft_pb2_grpc.ServicesServicer):
         #rewrite metadata to persistent memory
         self.write_metadata()
 
-        print("The current term is: ", self.current_term)
-        print("The log is: ", self.log)
-        print("The suffix is: ", Suffix)
-        print("Checking if log is ok...")
+        # print("The current term is: ", self.current_term)
+        # print("The log is: ", self.log)
+        # print("The suffix is: ", Suffix)
+        # print("Checking if log is ok...")
 
-        print("the length of the log is: ", len(self.log))
-        print("the prefix length is: ", PrefixLength)
-        print("the last term of the prefix is: ", PrefixTerm)
-        if (PrefixLength > 0 and len(self.log) >= PrefixLength):
-            print("the last term of the log is: ", self.log[PrefixLength-1][-1])
+        # print("the length of the log is: ", len(self.log))
+        # print("the prefix length is: ", PrefixLength)
+        # print("the last term of the prefix is: ", PrefixTerm)
+        # if (PrefixLength > 0 and len(self.log) >= PrefixLength):
+        #     print("the last term of the log is: ", self.log[PrefixLength-1][-1])
 
         #check if log is ok
         logok = ((len(self.log)>=PrefixLength) and (PrefixLength==0 or self.log[PrefixLength-1][-1]==PrefixTerm))
 
-        print("Log is ok: ", logok)
+        # print("Log is ok: ", logok)
 
         #init replicate log response
         replicate_log_response = raft_pb2.ReplicateLogResponse()
@@ -394,11 +394,11 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
     def CommitLogEntries(self):
 
-        print("Trying to commit log entries...")
+        # print("Trying to commit log entries...")
 
         while self.commit_length<len(self.log):
 
-            print("loop check 1")
+            # print("loop check 1")
             
             acks=0
             recvd_acks_list = []
@@ -408,8 +408,8 @@ class Node(raft_pb2_grpc.ServicesServicer):
                     acks += 1
                     recvd_acks_list.append(id)
 
-            print("acks received for commit is: ", acks)
-            print("recvd acks list is: ", recvd_acks_list)
+            # print("acks received for commit is: ", acks)
+            # print("recvd acks list is: ", recvd_acks_list)
 
             if acks>=2:#hardcode
 
@@ -474,9 +474,9 @@ class Node(raft_pb2_grpc.ServicesServicer):
                     response_success = response.success
 
                     print(f"Node {self.node_id} received response from Node {follower_id}.")
-                    print("term: ", response_current_term)
-                    print("ack: ", response_ack)
-                    print("success: ", response_success)
+                    # print("term: ", response_current_term)
+                    # print("ack: ", response_ack)
+                    # print("success: ", response_success)
 
                     if(response_success):
                         self.count_for_success_heartbeat+=1
@@ -489,7 +489,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
                         elif (self.sent_length[follower_id] > 0):
                             #log mismatch, so decrease sent length by 1
-                            print(f"log mismatch for {follower_id}, length of follower log is: {self.sent_length[follower_id]}")
+                            # print(f"log mismatch for {follower_id}, length of follower log is: {self.sent_length[follower_id]}")
                             self.sent_length[follower_id] -= 1
                             self.replicateLog(follower_id)
 
@@ -511,7 +511,7 @@ def nodeClient(Node):
 
     while True:
 
-        print(Node.log)
+        # print(Node.log)
         #check current role
         if Node.current_role == "leader":
             #replicate log periodically
@@ -632,7 +632,7 @@ def nodeClient(Node):
                             Node.sent_length[id]=len(Node.log)
                             Node.acked_length[id]=0
                             Node.replicateLog(id)
-                        print("sent lengths are: ", Node.sent_length) 
+                        # print("sent lengths are: ", Node.sent_length) 
                         break
 
 
