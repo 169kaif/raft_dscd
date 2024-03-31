@@ -8,7 +8,8 @@ if __name__ == '__main__':
     peer_addresses = {1:"localhost:5056", 2:"localhost:5057", 3:"localhost:5058", 4:"localhost:5059", 5:"localhost:5060"}
     
     #store current leader (init w/ 1)
-    current_leader = 1
+    current_leader = 3
+    check=0
 
     while (True):
         req = input("Enter Request: ")
@@ -33,6 +34,7 @@ if __name__ == '__main__':
                     if (recvd_check):
                         print("Operation Successful...")
                         print(recvd_data)
+                        check=0
                         break
                     else:
                         print("Failure...Requesting Again...")
@@ -40,6 +42,11 @@ if __name__ == '__main__':
                     
 
             except:
+                check+=1
+                if(check==5):
+                     break
                 print("Node Down...Requesting Again From Different Node...")
                 current_leader = (current_leader % 5) + 1
                 continue
+        if(check==5):
+             break

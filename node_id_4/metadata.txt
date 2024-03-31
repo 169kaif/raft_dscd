@@ -1,0 +1,3 @@
+commitLength: 6
+Term: 39
+NodeID: 4

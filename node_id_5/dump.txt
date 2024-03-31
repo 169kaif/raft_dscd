@@ -1,0 +1,174 @@
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 (follower) committed the entry NO-OP to the state machine.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 (follower) committed the entry SET A 1 to the state machine.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 accepted AppendEntries RPC from 1.
+Node 5 election timer timed out, Starting election
+Vote denied for Node 3 in term 3
+Error occurred while sending RPC to Node 1.
+Node 5 became the leader for term 3
+Error occurred while sending RPC to Node 1.
+Leader 5 has lease.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 1.
+Node 5 (leader) committed the entry NO-OP to the state machine.Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 1.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 1.
+Node 5 (leader) received an SET B 1 request.
+Error occurred while sending RPC to Node 1.
+Node 5 (leader) committed the entry SET B 1 to the state machine.Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 1.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 1.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 1.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 1.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Node 5 (leader) received an SET C 50 request.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Node 5 (leader) committed the entry SET C 50 to the state machine.Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Leader 5 sending heartbeat and renewing lease.
+Leader 5 sending heartbeat and renewing lease.
+Leader 5 sending heartbeat and renewing lease.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Node 5 (leader) received an GET A request.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 4
+Leader 5 lease Renewal failed...stepping down
+5 Stepping downNode 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 6
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 8
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 10
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 12
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 14
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 16
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 18
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 20
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 22
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 24
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 26
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 28
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 30
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 32
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 34
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 36
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Error occurred while sending RPC to Node 3.
+Vote granted for Node 4 in term 38
+Node 5 election timer timed out, Starting election
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Node 5 became the leader for term 39
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Leader 5 has lease.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Node 5 (leader) committed the entry NO-OP to the state machine.Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Leader 5 sending heartbeat and renewing lease.
+Error occurred while sending RPC to Node 2.
+Error occurred while sending RPC to Node 1.
+Leader 5 sending heartbeat and renewing lease.
+Leader 5 sending heartbeat and renewing lease.
