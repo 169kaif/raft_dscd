@@ -115,9 +115,9 @@ class Node(raft_pb2_grpc.ServicesServicer):
 
         serveclient_reply = raft_pb2.ServeClientReply()
 
-        print(f"Node {self.node_id} (leader) received an {message} request.")
+        print(f"Node {self.node_id} ({self.current_role}) received a {message} request.")
         with open("dump.txt", "a") as f:
-            f.write(f"Node {self.node_id} (leader) received an {message} request.\n")
+            f.write(f"Node {self.node_id} ({self.current_role}) received a {message} request.\n")
 
         #check requested action
         if (req_action == "SET"):
@@ -636,7 +636,6 @@ def nodeClient(Node):
                             Node.replicateLog(id)
                         # print("sent lengths are: ", Node.sent_length) 
                         break
-
 
 if __name__ == '__main__':
 

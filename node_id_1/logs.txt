@@ -1,6 +1,0 @@
-NO-OP 1
-SET A 1 1
-NO-OP 3
-SET B 1 3
-SET C 50 3
-NO-OP 39
