@@ -484,7 +484,7 @@ class Node(raft_pb2_grpc.ServicesServicer):
                             self.sent_length[follower_id] = response_ack
                             self.acked_length[follower_id] = response_ack
                             if(isLeader):
-                                self.count_for_success_heartbeat+=1
+                                self.count_for_success_heartbeat+=1 
                             self.CommitLogEntries()
 
                         elif (self.sent_length[follower_id] > 0):
