@@ -1,2 +1,2 @@
 # raft_dscd
-Implementation of the RAFT algorithm for assignment 2 of CSE530
+Implementation of the RAFT consensus algorithm for assignment 2 of CSE530
